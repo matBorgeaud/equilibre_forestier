@@ -1,5 +1,5 @@
 # rase ta forêt
-[illustration](assets/illustration.png)
+![illustration](assets/illustration.png)
 ## description
 Rase ta forêt est un jeu humoristique et satirique permettant de mieux comprendre les limites de la régénération naturelle.
 ## la plus simple façon d'y jouer et de se rendre sur: https://jv2d.borgeaud.online/
