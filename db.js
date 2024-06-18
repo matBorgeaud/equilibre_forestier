@@ -3,7 +3,7 @@ const database = {
         { id: 1, name: 'hache', assetLocation: 'assets/image/axe.jpg', prix: 15, vitesse: 0.2, quantite: 0 },
         { id: 2, name: 'tronçonneuse', assetLocation: 'assets/image/motorsaw.png', prix: 50, vitesse: 0.5, quantite: 0 },
         { id: 3, name: 'bûcheron', assetLocation: 'assets/image/lumber.png', prix: 150, vitesse: 2, quantite: 0 },
-        { id: 4, name: 'bulldozer', assetLocation: 'assets/image/bulldozer.png', prix: 1500, vitesse: 10, quantite: 0 }
+        { id: 4, name: 'bulldozer', assetLocation: 'assets/image/bulldozer.png', prix: 1500, vitesse: 10, quantite: 100 }
     ],
 };
 
@@ -34,6 +34,12 @@ function queryDB() {
         vitesseDonneeParBonus += speed;
         console.log("vitesse donnée par bonus: " + vitesseDonneeParBonus);
     });
+}
+
+function resetQuantite(database) {
+  database.bonus.forEach(item => {
+      item.quantite = 0;
+  });
 }
 
 queryDB();

@@ -1,10 +1,55 @@
 
 
-kaboom();
+kaboom({
+    backgroundAudio: true,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    scale: 1, // Pas de mise à l'échelle initiale, car nous utilisons les dimensions de l'écran
+    stretch: true, // Étendre pour s'adapter à la taille de l'écran
+    letterbox: true, // Ajouter des bandes noires pour conserver les proportions
+    
+});
+  //La fonction précédente a été créée avec l'aide de ChatGPT avec le prompt: comment ajouter du texte pour qu'il ne se déforme pas au redimensionnement avec kaboomjs.
+
+  // Fonction utilitaire pour insérer des retours à la ligne dans un texte
+  function wrapText(text, maxLineLength) {
+    let lines = [];
+    let words = text.split(' ');
+    let currentLine = '';
+
+    for (let word of words) {
+        if ((currentLine + word).length <= maxLineLength) {
+            currentLine += word + ' ';
+        } else {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+        }
+    }
+    lines.push(currentLine.trim());
+    return lines.join('\n');
+}
+
+// Calculer la longueur maximale des lignes en fonction de la largeur de l'écran
+const fontSize = 40; // Taille de la police
+const charWidth = fontSize / 2; // Largeur approximative d'un caractère (peut varier selon la police)
+const maxLineLength = Math.floor((window.innerWidth - 40) / charWidth); // Ajuster pour la marge
+//La fonction précédente a été créée avec l'aide de ChatGPT avec le prompt: comment ajouter du texte pour qu'il ne se déforme pas au redimensionnement avec kaboomjs.
+
+const pad = 50
 
 
 loadSprite("treeButton", "assets/image/tree_2.png");
+loadSprite("titre", "assets/image/titre.png");
+loadSprite("play", "assets/image/play.gif");
 loadSprite("layer1", "forest background layers/Forest layer3.png");
+loadSprite("layer9", "forest background layers/Forest layer9.png");
+loadSprite("layer3", "forest background layers/Forest layer3.png");
+loadSound("buy", "assets/sons/buy.mp3")
+loadSound("woodcrack", "assets/sons/wood_crack.mp3")
+loadSound("boom", "assets/sons/boom.mp3")
+loadSound("musique", "assets/sons/musique.mp3")
+
+
 
 scene("acceuil", () => {
     // Charger les images
@@ -23,29 +68,73 @@ for (const image of images) {
     ]);
     layers.push({ name: image.name, layer: img });
   }
-    const texte = add([
-        text("Vous êtes vous déjà demandez jusqu'à quel point vous pouvez abattre une forêt"),
+  //La fonction précédente a été créée avec l'aide de ChatGPT avec le prompt: supperpose moi plusieurs images d'un tableau
+   
+    onKeyPress("space", () => {
+        go("instruction");
+    })
+    add([
+        text("Vous êtes vous déjà demandé jusqu'à quel point vous pouvez abattre une forêt. Pour le savoir appuyez sur espace.", {
+            
+            
+            width: width() - pad * 2,
+            align: "center",
+            lineSpacing: 8,
+            letterSpacing: 4,
+        }),
         pos(24, 130),
+      
         
-        
-    ])
-    const texte2 = add([
-        text("pour le savoir appuyez sur espace"),
-        anchor("center"),
-        pos(width()/2, height()/2),
-        
-        
-    ])
+    ]);
+})
+
+scene("instruction", () => {
+       // Charger les images
+for (const image of images) {
+    loadSprite(image.name, image.path);
+  }
+  
+  // Créer les couches d'images en utilisant le tableau
+  const layers = [];
+  for (const image of images) {
+    const img = add([
+      sprite(image.name),
+      pos(width() / 2, height() / 2),
+      anchor("center"),
+      scale(4.67),
+    ]);
+    layers.push({ name: image.name, layer: img });
+  }
+  
+
+add([
+    text("Pour abattre des arbres il faudra cliquer sur l'arbre au milieu de l'écran, le compteur sera à gauche et il sera possible d'acheter des bonus à droite", {
+		
+		
+		width: width() - pad * 2,
+		align: "center",
+		lineSpacing: 8,
+		letterSpacing: 4,
+    }),
+    pos(24, 130),
+  
+    
+]);
+
+
     onKeyPress("space", () => {
         go("main");
     })
-})
 
+})
 
 scene("main", () => {
 
    
-
+    const musique = play("musique", {
+        loop: true,
+        paused: false,
+    })  
       
       
 // Charger les images
@@ -85,6 +174,31 @@ for (const image of images) {
     
     const cases = []; // Tableau pour stocker les références des cases
 
+    const screenWidth = width();
+    const screenHeight = height();
+    const caseWidth = screenWidth / 3.3;
+    const caseHeight = screenHeight; 
+    
+// Créer une grande case sur le quart droit de l'écran
+add([
+    rect(caseWidth, caseHeight), // Crée un rectangle avec les dimensions définies
+    pos(screenWidth - caseWidth, 0), // Positionner la case sur le quart droit
+    color(204, 204, 204) 
+]);
+
+
+const txtStyle = {
+    size: 50, 
+    color: rgb(255, 255, 255), 
+};
+
+add([
+    text("Bonus", txtStyle),
+    pos(screenWidth - caseWidth / 2, screenHeight / 20),
+    anchor("center"), // Centrer le texte
+]);
+// fonction fabriquée avec ChatGPT: comnment faire une case en kaboomjs
+
 
     for (let i = 0; i < longueurTableau; i++) {
         loadSprite(database.bonus[i].name, database.bonus[i].assetLocation); 
@@ -99,7 +213,7 @@ for (const image of images) {
         }
         
         const y = 300 + 100*i;
-        const TestCase = add([
+        const CaseAmelioration = add([
             rect (500, 100),
             pos(1520, y),
             outline(4),
@@ -118,7 +232,7 @@ for (const image of images) {
             pos(1660, y),
         ]);
 
-        TestCase.add([
+        CaseAmelioration.add([
             sprite(database.bonus[i].name),
             pos(-220,0),
             scale(0.13),
@@ -144,6 +258,7 @@ for (const image of images) {
                 CaseQuantite.text = database.bonus[i].quantite;    
                 CasePrix.text = Math.round(database.bonus[i].prix);
                 console.log(database.bonus[i].name + " acheté");
+                play("buy")
                 
             }  
         });
@@ -152,7 +267,7 @@ for (const image of images) {
 
     const treeButton = add([
         sprite("treeButton"),
-        pos(690, 620),
+        pos(width()/ 2.54, height() / 1.6),
         anchor("center"),
         scale(3.6),
         area(),
@@ -161,6 +276,7 @@ for (const image of images) {
     ]);
 
     onKeyPress("space", (t) => {
+        play("woodcrack")
         abattreArbre();
         function zoomOut(t){
             t.width  = t.width   * CLICK_JUMP;
@@ -174,6 +290,7 @@ for (const image of images) {
     })
 
     onClick("treeButton", (t) => {
+        play("woodcrack")
         abattreArbre();
         function zoomOut(t){
             t.width  = t.width   * CLICK_JUMP;
@@ -200,13 +317,7 @@ for (const image of images) {
         
     }
     
-    // function updateColorPrix(){
-    //     for (let i = 0; i < longueurTableau; i++) {
-    //         var colorPrix = (0, 0, 255);
-    //         if (compteurArbre.value <= database.bonus[i].prix) {
-    //           colorPrix = (0, 0, 220);
-    //         }
-    // }
+  
 
     let historiquePuissancesDeQuatre = new Set();
 
@@ -216,22 +327,87 @@ for (const image of images) {
             if (!historiquePuissancesDeQuatre.has(puissanceActuelle)) {
                 console.log(`Félicitations ! Vous avez atteint ou dépassé ${puissanceActuelle} cookies, une puissance de 2.`);
                 historiquePuissancesDeQuatre.add(puissanceActuelle);
-                efficacite = efficacite * 0.65;
+                efficacite = efficacite * 0.6;
                 shake(240);
                 removeTopLayer();
+                play("boom");
                 if (puissanceActuelle > 8700) {
                     
-                    go("acceuil")
+                    go("fin")
                 }
                 
             }
             puissanceActuelle *= 3.95;
         }
     }   
+    // cette fonction a été générée avec l'aide de chatGPT, voici le prompt utilisé: fais moi une fonction js qui vérifie si x a atteint ou dépassé une puissance de 4 non encore atteinte par le passé. Le résultat de chatGPT ne correspond pas tout à fait les variables doivent notamment être adaptées
 
 });
 
+scene("fin", () => {
+    const img = add([
+        sprite("layer9"),
+        pos(width() / 2, height() / 2),
+        anchor("center"),
+        scale(4.67),
+      ]);
+      const img2 = add([
+        sprite("layer1"),
+        pos(width() / 2, height() / 2),
+        anchor("center"),
+        scale(4.67),
+      ]);
+      const texte = add([
+        text("Difficile d'abattre des arbres maintenant qu'il n'y en a plus et que la forêt ne se régénera pas. Vous avez déjà probablement remarqué qu'indépendamment des bonus il était plus difficile de les abattre. Si vous y avez déjà joué plusieurs fois et que le résultat est toujours le même c'est qu'il est peut-être tant d'arrêter d'y jouer pour espérer gagner",{
+            width: width() - pad * 2,
+		align: "center",
+		lineSpacing: 8,
+		letterSpacing: 4,
+        }),
+        pos(24, 130),
+        
+        
+    ])
+    onKeyPress("space", (t) => {
+        resetQuantite(database);
+        var compteurArgent = 0;
+        var prixArbre = 1;
+        var vitesseAbattage = 1;
+        var efficacite = 1;
+        go("pageAcceuil")
+    })
+})
 
 
-// Lancement de k'acceuil
-go("acceuil");
+
+scene("pageAcceuil", () => {
+    const img = add([
+       sprite("titre"),
+       anchor("center"),
+       pos(width()/2, height() / 2),
+        
+        
+    ])
+    const play = add([
+        sprite("play"),
+        anchor("center"),
+        scale(0.4),
+        pos(width() / 2, height() / 2),
+        area(),
+        "play"
+
+
+         
+         
+     ])
+    onKeyPress("space", (t) => {
+        go("acceuil")
+    })
+    onClick("play", () => {
+        go("acceuil")
+    });
+
+})
+
+// Lancement de l'acceuil
+go("pageAcceuil")
