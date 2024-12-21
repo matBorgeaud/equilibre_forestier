@@ -49,7 +49,7 @@ loadSound("woodcrack", "assets/sons/wood_crack.mp3")
 loadSound("boom", "assets/sons/boom.mp3")
 loadSound("musique", "assets/sons/musique.mp3")
 
-
+scaleRatio = document.documentElement.clientWidth / 384
 
 scene("acceuil", () => {
     // Charger les images
@@ -59,12 +59,13 @@ for (const image of images) {
   
   // Créer les couches d'images en utilisant le tableau
   const layers = [];
+  
   for (const image of images) {
     const img = add([
       sprite(image.name),
       pos(width() / 2, height() / 2),
       anchor("center"),
-      scale(4.67),
+      scale(scaleRatio),
     ]);
     layers.push({ name: image.name, layer: img });
   }
@@ -101,7 +102,7 @@ for (const image of images) {
       sprite(image.name),
       pos(width() / 2, height() / 2),
       anchor("center"),
-      scale(4.67),
+      scale(scaleRatio),
     ]);
     layers.push({ name: image.name, layer: img });
   }
@@ -149,7 +150,7 @@ for (const image of images) {
       sprite(image.name),
       pos(width() / 2, height() / 2),
       anchor("center"),
-      scale(4.67),
+      scale(scaleRatio),
     ]);
     layers.push({ name: image.name, layer: img });
   }
@@ -349,13 +350,13 @@ scene("fin", () => {
         sprite("layer9"),
         pos(width() / 2, height() / 2),
         anchor("center"),
-        scale(4.67),
+        scale(scaleRatio),
       ]);
       const img2 = add([
         sprite("layer1"),
         pos(width() / 2, height() / 2),
         anchor("center"),
-        scale(4.67),
+        scale(scaleRatio),
       ]);
       const texte = add([
         text("Difficile d'abattre des arbres maintenant qu'il n'y en a plus et que la forêt ne se régénera pas. Vous avez déjà probablement remarqué qu'indépendamment des bonus il était plus difficile de les abattre. Si vous y avez déjà joué plusieurs fois et que le résultat est toujours le même c'est qu'il est peut-être tant d'arrêter d'y jouer pour espérer gagner",{
@@ -381,10 +382,12 @@ scene("fin", () => {
 
 
 scene("pageAcceuil", () => {
+    scaleRatioTitre = document.documentElement.clientWidth / 1920
     const img = add([
        sprite("titre"),
        anchor("center"),
        pos(width()/2, height() / 2),
+       scale(scaleRatioTitre)
         
         
     ])
