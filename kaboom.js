@@ -49,7 +49,9 @@ loadSound("woodcrack", "assets/sons/wood_crack.mp3")
 loadSound("boom", "assets/sons/boom.mp3")
 loadSound("musique", "assets/sons/musique.mp3")
 
-scaleRatio = document.documentElement.clientWidth / 384
+xWiddth = document.documentElement.clientWidth
+yWiddth = document.documentElement.clientHeight
+scaleRatio = xWiddth / 384
 
 scene("acceuil", () => {
     // Charger les images
@@ -109,7 +111,7 @@ for (const image of images) {
   
 
 add([
-    text("Pour abattre des arbres il faudra cliquer sur l'arbre au milieu de l'écran, le compteur sera à gauche et il sera possible d'acheter des bonus à droite", {
+    text("Il va falloir abattre l'arbre du centre. Appuyez sur espace.", {
 		
 		
 		width: width() - pad * 2,
@@ -166,7 +168,7 @@ for (const image of images) {
 
     const compteurArbre = add([
         text("0"),
-        pos(24, 24),
+        pos(xWiddth*0.4, yWiddth*0.1),
         z(100),
         { value: 0, arbreTotal: 0 },
     ]);
@@ -181,11 +183,11 @@ for (const image of images) {
     const caseHeight = screenHeight; 
     
 // Créer une grande case sur le quart droit de l'écran
-add([
-    rect(caseWidth, caseHeight), // Crée un rectangle avec les dimensions définies
-    pos(screenWidth - caseWidth, 0), // Positionner la case sur le quart droit
-    color(204, 204, 204) 
-]);
+// add([
+//     rect(caseWidth, caseHeight), // Crée un rectangle avec les dimensions définies
+//     pos(screenWidth - caseWidth, 0), // Positionner la case sur le quart droit
+//     color(204, 204, 204) 
+// ]);
 
 
 const txtStyle = {
