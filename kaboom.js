@@ -48,6 +48,7 @@ loadSound("buy", "assets/sons/buy.mp3")
 loadSound("woodcrack", "assets/sons/wood_crack.mp3")
 loadSound("boom", "assets/sons/boom.mp3")
 loadSound("musique", "assets/sons/musique.mp3")
+loadFont("uphea", "assets/fonts/upheavtt.ttf")
 
 xWiddth = document.documentElement.clientWidth
 yWiddth = document.documentElement.clientHeight
@@ -84,8 +85,11 @@ for (const image of images) {
             align: "center",
             lineSpacing: 8,
             letterSpacing: 4,
+            font: "uphea",
+            size: 72
         }),
-        pos(24, 130),
+        //pos(24, 130),
+        pos(0, height() / 2.5)
       
         
     ]);
@@ -111,15 +115,17 @@ for (const image of images) {
   
 
 add([
-    text("Il va falloir abattre l'arbre du centre. Appuyez sur espace.", {
+    text("Il faut abattre l'arbre au centre. Appuyez sur espace.", {
 		
 		
 		width: width() - pad * 2,
 		align: "center",
 		lineSpacing: 8,
 		letterSpacing: 4,
+        font: "uphea",
+        size: 72
     }),
-    pos(24, 130),
+    pos(0, height() / 2.5)
   
     
 ]);
@@ -167,10 +173,14 @@ for (const image of images) {
       
 
     const compteurArbre = add([
-        text("0"),
+        text("0", {
+            font: "uphea",
+            size: 150
+        }),
         pos(xWiddth*0.4, yWiddth*0.1),
         z(100),
         { value: 0, arbreTotal: 0 },
+        
     ]);
 
     const longueurTableau = database.bonus.length;
@@ -195,11 +205,11 @@ const txtStyle = {
     color: rgb(255, 255, 255), 
 };
 
-add([
-    text("Bonus", txtStyle),
-    pos(screenWidth - caseWidth / 2, screenHeight / 20),
-    anchor("center"), // Centrer le texte
-]);
+//add([
+  //  text("Bonus", txtStyle),
+    //pos(screenWidth - caseWidth / 2, screenHeight / 20),
+    //anchor("center"), // Centrer le texte
+//]);
 // fonction fabriquée avec ChatGPT: comnment faire une case en kaboomjs
 
 
@@ -218,21 +228,27 @@ add([
         const y = 300 + 100*i;
         const CaseAmelioration = add([
             rect (500, 100),
-            pos(1520, y),
+            pos(width()/1.25, y),
             outline(4),
             anchor("center"),
             area(),
             `${'caseBonus'+i}`
         ]);
         const CaseQuantite = add([
-            text(database.bonus[i].quantite),
+            text(database.bonus[i].quantite,{
+                font: "uphea",
+                size: 50
+            }),
             color(0, 0, 255),
-            pos(1420, y-30),
+            pos((width()/1.25)-100, y-30),
         ]);
         const CasePrix = add([
-            text(database.bonus[i].prix),
+            text(database.bonus[i].prix,{
+                font: "uphea",
+                size: 50
+            }),
             color(0, 0, 255),
-            pos(1660, y),
+            pos((width()/1.25)+140, y),
         ]);
 
         CaseAmelioration.add([
@@ -330,7 +346,7 @@ add([
             if (!historiquePuissancesDeQuatre.has(puissanceActuelle)) {
                 console.log(`Félicitations ! Vous avez atteint ou dépassé ${puissanceActuelle} cookies, une puissance de 2.`);
                 historiquePuissancesDeQuatre.add(puissanceActuelle);
-                efficacite = efficacite * 0.6;
+                efficacite = efficacite * 0.3;
                 shake(240);
                 removeTopLayer();
                 play("boom");
@@ -361,16 +377,42 @@ scene("fin", () => {
         scale(scaleRatio),
       ]);
       const texte = add([
-        text("Difficile d'abattre des arbres maintenant qu'il n'y en a plus et que la forêt ne se régénera pas. Vous avez déjà probablement remarqué qu'indépendamment des bonus il était plus difficile de les abattre. Si vous y avez déjà joué plusieurs fois et que le résultat est toujours le même c'est qu'il est peut-être tant d'arrêter d'y jouer pour espérer gagner",{
+        text("Quand il n’y a plus d’arbres, il n’y a plus de victoire. Pourquoi vouloir continuer ?",{
             width: width() - pad * 2,
 		align: "center",
 		lineSpacing: 8,
 		letterSpacing: 4,
+        font: "uphea",
+            size: 72
         }),
         pos(24, 130),
+
+    
         
         
     ])
+    const play = add([
+        sprite("play"),
+        anchor("center"),
+        scale(0.4),
+        pos(width() / 2, height() / 2),
+        area(),
+        "play"
+
+
+         
+         
+     ])
+   
+    onClick("play", () => {
+        resetQuantite(database);
+        var compteurArgent = 0;
+        var prixArbre = 1;
+        var vitesseAbattage = 1;
+        var efficacite = 1;
+        go("main")
+    });
+
     onKeyPress("space", (t) => {
         resetQuantite(database);
         var compteurArgent = 0;
