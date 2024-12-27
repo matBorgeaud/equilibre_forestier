@@ -239,7 +239,7 @@ const txtStyle = {
                 font: "uphea",
                 size: 50
             }),
-            color(0, 0, 255),
+            color(0, 0, 0),
             pos((width()/1.25)-100, y-30),
         ]);
         const CasePrix = add([
@@ -247,7 +247,7 @@ const txtStyle = {
                 font: "uphea",
                 size: 50
             }),
-            color(0, 0, 255),
+            color(0, 0, 0),
             pos((width()/1.25)+140, y),
         ]);
 
@@ -257,6 +257,7 @@ const txtStyle = {
             scale(0.13),
            
         ]);
+
 
         function updatePrix() {
             database.bonus[i].prix = database.bonus[i].prix * 1.15;
@@ -288,7 +289,7 @@ const txtStyle = {
         sprite("treeButton"),
         pos(width()/ 2.54, height() / 1.6),
         anchor("center"),
-        scale(3.6),
+        scale(scaleRatio*0.77),
         area(),
         "treeButton"
          
@@ -346,7 +347,7 @@ const txtStyle = {
             if (!historiquePuissancesDeQuatre.has(puissanceActuelle)) {
                 console.log(`Félicitations ! Vous avez atteint ou dépassé ${puissanceActuelle} cookies, une puissance de 2.`);
                 historiquePuissancesDeQuatre.add(puissanceActuelle);
-                efficacite = efficacite * 0.3;
+                efficacite = efficacite * 0.32;
                 shake(240);
                 removeTopLayer();
                 play("boom");
