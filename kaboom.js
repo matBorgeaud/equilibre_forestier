@@ -192,12 +192,6 @@ for (const image of images) {
     const caseWidth = screenWidth / 3.3;
     const caseHeight = screenHeight; 
     
-// Créer une grande case sur le quart droit de l'écran
-// add([
-//     rect(caseWidth, caseHeight), // Crée un rectangle avec les dimensions définies
-//     pos(screenWidth - caseWidth, 0), // Positionner la case sur le quart droit
-//     color(204, 204, 204) 
-// ]);
 
 
 const txtStyle = {
@@ -205,11 +199,7 @@ const txtStyle = {
     color: rgb(255, 255, 255), 
 };
 
-//add([
-  //  text("Bonus", txtStyle),
-    //pos(screenWidth - caseWidth / 2, screenHeight / 20),
-    //anchor("center"), // Centrer le texte
-//]);
+
 // fonction fabriquée avec ChatGPT: comnment faire une case en kaboomjs
 
 

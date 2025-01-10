@@ -7,15 +7,6 @@ var efficacite = 1;
 const CLICK_JUMP = 1.05;
 
 
-// boutonArbre.addEventListener("click", function(){
-//     vitesseAbattage = 1 + vitesseDonneeParBonus;
-//     console.log(vitesseAbattage)
-//     compteurArbre = compteurArbre + vitesseAbattage
-//     console.log("nombre d'arbres abattus: " + compteurArbre)
-    
-// })
-
-
 function vendreArbe(nombreArbreVendu) {
     if (nombreArbreVendu <= compteurArbre) {
         compteurArgent += nombreArbreVendu*prixArbre
