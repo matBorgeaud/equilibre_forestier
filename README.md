@@ -18,7 +18,7 @@ Abattez des arbres pour maximiser vos gains, mais attention : la régénération
 
 ## 🛠️ **Outils utilisés**  
 - ⚡ **Kaboom.js** : un moteur JavaScript pour créer des jeux 2D.  
-- 🤖 **ChatGPT** : utilisé pour résoudre des questions de syntaxe et implémenter certaines fonctions.  
+- 🤖 **ChatGPT** : utilisé pour résoudre des questions de syntaxe et implémenter certaines fonctions, les prompts utilisés sont précisés au sein du code.  
 
 ## 🎓 **À propos du projet**  
 Ce jeu a été réalisé dans le cadre du cours **Jeu Vidéo 2D** dispensé par **Isaac Pante** au sein de la **Faculté des Lettres** de l’UNIL (Université de Lausanne).  
