@@ -225,9 +225,9 @@ const txtStyle = {
             }
         }
         
-        const y = 300 + 100*i;
+        const y = 300 + 150*i;
         const CaseAmelioration = add([
-            rect (500, 100),
+            rect (500, 150),
             pos(width()/1.25, y),
             outline(4),
             anchor("center"),
