@@ -1,8 +1,25 @@
-# rase ta forêt
-![illustration](assets/illustration.png)
-## description
-Rase ta forêt est un jeu humoristique et satirique permettant de mieux comprendre les limites de la régénération naturelle.
-## la plus simple façon d'y jouer et de se rendre sur: https://jv2d.borgeaud.online/
-## outils utilisés
-les outils utilisés sont KaboomJS et ChatGPT pour certaines fonctions annexes et des questions de syntaxe, malheureusement je ne suis plus capable de me souvenir desquelles il s'agissait
-## Ce projet a été développé dans le cadre du cours jeu vidéo 2D dispensé par Isaac Pante (SLI, Lettres, UNIL))
+# 🌳 **Rase ta forêt**  
+
+![illustration](assets/illustration.png)  
+
+## 📖 **Description**  
+*Rase ta forêt* est un jeu humoristique et satirique qui pousse à réfléchir sur les **limites de la régénération naturelle**. À travers un gameplay simple mais percutant de type clicker, ce jeu met en lumière les conséquences d'une déforestation incontrôlée. 🌲🚜  
+
+L'idée est de vous amuser tout en explorant des concepts sérieux : jusqu'où peut-on aller avant qu'une forêt ne puisse plus se régénérer ? Et surtout, quand faut-il s'arrêter ? 🌱
+
+Avec son ton décalé et son approche minimaliste, *Rase ta forêt* propose une expérience unique, à la fois éducative et divertissante. Vous pourriez bien découvrir que le véritable défi n’est pas de gagner… mais de savoir quand s’arrêter. 🤯  
+
+## 🎮 **Comment jouer ?**  
+🕹️ La façon la plus simple de jouer :  
+👉 Rendez-vous sur **[jv2d.borgeaud.online](https://jv2d.borgeaud.online/)** et commencez à explorer (ou à détruire) votre forêt !  
+
+✅ **Objectif** :  
+Abattez des arbres pour maximiser vos gains, mais attention : la régénération naturelle a ses limites !  
+
+## 🛠️ **Outils utilisés**  
+- ⚡ **Kaboom.js** : un moteur JavaScript pour créer des jeux 2D.  
+- 🤖 **ChatGPT** : utilisé pour résoudre des questions de syntaxe et implémenter certaines fonctions.  
+
+## 🎓 **À propos du projet**  
+Ce jeu a été réalisé dans le cadre du cours **Jeu Vidéo 2D** dispensé par **Isaac Pante** au sein de la **Faculté des Lettres** de l’UNIL (Université de Lausanne).  
+
