@@ -1,451 +1,201 @@
-
-
+// Initialize Kaboom
 kaboom({
-    backgroundAudio: true,
-    width: window.innerWidth,
-    height: window.innerHeight,
-    scale: 1, // Pas de mise à l'échelle initiale, car nous utilisons les dimensions de l'écran
-    stretch: true, // Étendre pour s'adapter à la taille de l'écran
-    letterbox: true, // Ajouter des bandes noires pour conserver les proportions
-    
+    background: [135, 206, 235],
+    fullscreen: true,
 });
-  //La fonction précédente a été créée avec l'aide de ChatGPT avec le prompt: comment ajouter du texte pour qu'il ne se déforme pas au redimensionnement avec kaboomjs.
 
-  // Fonction utilitaire pour insérer des retours à la ligne dans un texte
-  function wrapText(text, maxLineLength) {
-    let lines = [];
-    let words = text.split(' ');
-    let currentLine = '';
+// Game constants
+const GAME_DURATION = 300; // 5 minutes in seconds
+const INITIAL_TREES = 100;
+const INITIAL_MONEY = 0;
+const INITIAL_TREE_PRICE = 50;
+const TREE_PRICE_MULTIPLIER = 1.1; // Price increases as trees are cut
+const REGEN_RATE = 0.01; // Percentage of forest regenerated per second
+const INITIAL_TOOL_PRICE = 100; // Initial price of the tool
+const TOOL_PRICE_INCREASE = 1.15; // Price increase per purchase
+const TOOL_CUT_DELAY_REDUCTION = 0.1; // Reduction in cut delay per tool
+const REPLANT_COST = 200; // Cost to replant trees
+const REPLANT_TIME = 60; // Time for replanted trees to grow (in seconds)
 
-    for (let word of words) {
-        if ((currentLine + word).length <= maxLineLength) {
-            currentLine += word + ' ';
-        } else {
-            lines.push(currentLine.trim());
-            currentLine = word + ' ';
-        }
-    }
-    lines.push(currentLine.trim());
-    return lines.join('\n');
+// Game state
+let trees = INITIAL_TREES;
+let money = INITIAL_MONEY;
+let treePrice = INITIAL_TREE_PRICE;
+let toolPrice = INITIAL_TOOL_PRICE;
+let timeLeft = GAME_DURATION;
+
+// Delays
+let cutDelay = 2; // Delay in seconds for cutting a tree
+let lastCutTime = 0;
+
+// Replanting state
+let replantQueue = [];
+
+// UI Elements
+let treesLabel, moneyLabel, timeLabel, cutButton, toolButton, replantButton;
+
+// Helper functions
+function updateTreePrice() {
+    treePrice = Math.floor(INITIAL_TREE_PRICE * Math.pow(TREE_PRICE_MULTIPLIER, INITIAL_TREES - trees));
 }
 
-// Calculer la longueur maximale des lignes en fonction de la largeur de l'écran
-const fontSize = 40; // Taille de la police
-const charWidth = fontSize / 2; // Largeur approximative d'un caractère (peut varier selon la police)
-const maxLineLength = Math.floor((window.innerWidth - 40) / charWidth); // Ajuster pour la marge
-//La fonction précédente a été créée avec l'aide de ChatGPT avec le prompt: comment ajouter du texte pour qu'il ne se déforme pas au redimensionnement avec kaboomjs.
+function cutTree() {
+    if (trees > 0 && time() - lastCutTime > cutDelay) {
+        trees--;
+        money += treePrice;
+        updateTreePrice();
+        lastCutTime = time();
+        console.log("Tree cut! Money earned: $", treePrice);
+        updateUI();
+    } else if (trees <= 0) {
+        console.log("No more trees to cut!");
+    } else {
+        console.log("Please wait before cutting another tree.");
+    }
+}
 
-const pad = 50
+function buyTool() {
+    if (money >= toolPrice) {
+        money -= toolPrice;
+        cutDelay = Math.max(0.5, cutDelay - TOOL_CUT_DELAY_REDUCTION); // Prevent cutDelay from going below 0.5s
+        toolPrice = Math.floor(toolPrice * TOOL_PRICE_INCREASE);
+        console.log("Tool purchased! New cut delay: ", cutDelay, "s. Next tool price: $", toolPrice);
+        updateUI();
+    } else {
+        console.log("Not enough money to buy the tool. Current money: $", money);
+    }
+}
 
+function replantTree() {
+    if (money >= REPLANT_COST) {
+        money -= REPLANT_COST;
+        replantQueue.push(time() + REPLANT_TIME);
+        console.log("Tree replanted! It will grow in 1 minute.");
+        updateUI();
+    } else {
+        console.log("Not enough money to replant a tree. Current money: $", money);
+    }
+}
 
-loadSprite("treeButton", "assets/image/tree_2.png");
-loadSprite("titre", "assets/image/titre.png");
-loadSprite("play", "assets/image/play.gif");
-loadSprite("layer1", "forest background layers/Forest layer3.png");
-loadSprite("layer9", "forest background layers/Forest layer9.png");
-loadSprite("layer3", "forest background layers/Forest layer3.png");
-loadSound("buy", "assets/sons/buy.mp3")
-loadSound("woodcrack", "assets/sons/wood_crack.mp3")
-loadSound("boom", "assets/sons/boom.mp3")
-loadSound("musique", "assets/sons/musique.mp3")
-loadFont("uphea", "assets/fonts/upheavtt.ttf")
+function checkReplantedTrees() {
+    const now = time();
+    replantQueue = replantQueue.filter(growTime => {
+        if (now >= growTime) {
+            trees++;
+            console.log("A replanted tree has grown! Trees available: ", trees);
+            return false;
+        }
+        return true;
+    });
+    updateTreePrice();
+}
 
-xWiddth = document.documentElement.clientWidth
-yWiddth = document.documentElement.clientHeight
-scaleRatio = xWiddth / 384
+function regenerateForest() {
+    trees += Math.floor(trees * REGEN_RATE);
+    if (trees > INITIAL_TREES) trees = INITIAL_TREES;
+    updateTreePrice();
+    console.log("Forest regenerated. Trees available: ", trees);
+}
 
-scene("acceuil", () => {
-    // Charger les images
-for (const image of images) {
-    loadSprite(image.name, image.path);
-  }
-  
-  // Créer les couches d'images en utilisant le tableau
-  const layers = [];
-  
-  for (const image of images) {
-    const img = add([
-      sprite(image.name),
-      pos(width() / 2, height() / 2),
-      anchor("center"),
-      scale(scaleRatio),
-    ]);
-    layers.push({ name: image.name, layer: img });
-  }
-  //La fonction précédente a été créée avec l'aide de ChatGPT avec le prompt: supperpose moi plusieurs images d'un tableau
-   
-    onKeyPress("space", () => {
-        go("instruction");
-    })
-    add([
-        text("Vous êtes vous déjà demandé jusqu'à quel point vous pouvez abattre une forêt. Pour le savoir appuyez sur espace.", {
-            
-            
-            width: width() - pad * 2,
-            align: "center",
-            lineSpacing: 8,
-            letterSpacing: 4,
-            font: "uphea",
-            size: 72
-        }),
-        //pos(24, 130),
-        pos(0, height() / 2.5)
-      
-        
-    ]);
-})
+function updateUI() {
+    treesLabel.text = `Trees: ${trees}`;
+    moneyLabel.text = `Money: $${money}`;
+    timeLabel.text = `Time Left: ${Math.ceil(timeLeft)}s`;
+    const progress = Math.min(1, (time() - lastCutTime) / cutDelay);
+    cutButton.color = trees > 0 && progress < 1
+        ? rgb(255 * (1 - progress), 255 * progress, 0)
+        : rgb(0, 200, 0);
+    cutButton.get("buttonText")[0].text = trees > 0 && progress < 1
+        ? `Cutting... ${Math.floor(progress * 100)}%`
+        : "Cut Tree";
+}
 
-scene("instruction", () => {
-       // Charger les images
-for (const image of images) {
-    loadSprite(image.name, image.path);
-  }
-  
-  // Créer les couches d'images en utilisant le tableau
-  const layers = [];
-  for (const image of images) {
-    const img = add([
-      sprite(image.name),
-      pos(width() / 2, height() / 2),
-      anchor("center"),
-      scale(scaleRatio),
-    ]);
-    layers.push({ name: image.name, layer: img });
-  }
-  
+function endGame() {
+    if (trees === 0) {
+        go("end", "defeat");
+    } else if (money >= 10000 && trees >= 20) {
+        go("end", "victory");
+    } else {
+        go("end", "timeout");
+    }
+}
 
-add([
-    text("Il faut abattre l'arbre au centre. Appuyez sur espace.", {
-		
-		
-		width: width() - pad * 2,
-		align: "center",
-		lineSpacing: 8,
-		letterSpacing: 4,
-        font: "uphea",
-        size: 72
-    }),
-    pos(0, height() / 2.5)
-  
-    
-]);
-
-
-    onKeyPress("space", () => {
-        go("main");
-    })
-
-})
-
+// Main game scene
 scene("main", () => {
+    // Labels
+    treesLabel = add([text("Trees: 0", { size: 24 }), pos(20, 20)]);
+    moneyLabel = add([text("Money: $0", { size: 24 }), pos(20, 50)]);
+    timeLabel = add([text("Time Left: 0s", { size: 24 }), pos(20, 80)]);
 
-   
-    const musique = play("musique", {
-        loop: true,
-        paused: false,
-    })  
-      
-      
-// Charger les images
-for (const image of images) {
-    loadSprite(image.name, image.path);
-  }
-  
-  // Créer les couches d'images en utilisant le tableau
-  const layers = [];
-  for (const image of images) {
-    const img = add([
-      sprite(image.name),
-      pos(width() / 2, height() / 2),
-      anchor("center"),
-      scale(scaleRatio),
-    ]);
-    layers.push({ name: image.name, layer: img });
-  }
-  
-  // Fonction pour retirer la dernière couche
-  function removeTopLayer() {
-    if (layers.length > 0) {
-      const topLayer = layers.pop(); // Retirer la dernière couche du tableau
-      destroy(topLayer.layer);
-    }
-  }
-      
-
-    const compteurArbre = add([
-        text("0", {
-            font: "uphea",
-            size: 150
-        }),
-        pos(xWiddth*0.4, yWiddth*0.1),
-        z(100),
-        { value: 0, arbreTotal: 0 },
-        
-    ]);
-
-    const longueurTableau = database.bonus.length;
-    
-    const cases = []; // Tableau pour stocker les références des cases
-
-    const screenWidth = width();
-    const screenHeight = height();
-    const caseWidth = screenWidth / 3.3;
-    const caseHeight = screenHeight; 
-    
-
-
-const txtStyle = {
-    size: 50, 
-    color: rgb(255, 255, 255), 
-};
-
-
-// fonction fabriquée avec ChatGPT: comnment faire une case en kaboomjs
-
-
-    for (let i = 0; i < longueurTableau; i++) {
-        loadSprite(database.bonus[i].name, database.bonus[i].assetLocation); 
-        var colorPrix = (0, 0, 255);
-        function updateColorPrix() {
-            if (compteurArbre.value <= database.bonus[i].prix) {
-               CasePrix.color = RED; 
-            }
-            else {
-                CasePrix.color = GREEN;
-            }
-        }
-        
-        const y = 300 + 150*i;
-        const CaseAmelioration = add([
-            rect (500, 150),
-            pos(width()/1.25, y),
-            outline(4),
-            anchor("center"),
-            area(),
-            `${'caseBonus'+i}`
-        ]);
-        const CaseQuantite = add([
-            text(database.bonus[i].quantite,{
-                font: "uphea",
-                size: 50
-            }),
-            color(0, 0, 0),
-            pos((width()/1.25)-100, y-30),
-        ]);
-        const CasePrix = add([
-            text(database.bonus[i].prix,{
-                font: "uphea",
-                size: 50
-            }),
-            color(0, 0, 0),
-            pos((width()/1.25)+140, y),
-        ]);
-
-        CaseAmelioration.add([
-            sprite(database.bonus[i].name),
-            pos(-220,0),
-            scale(0.13),
-           
-        ]);
-
-
-        function updatePrix() {
-            database.bonus[i].prix = database.bonus[i].prix * 1.15;
-            
-        }
-
-        onUpdate(() => {
-            updateColorPrix()
-        })
-        
-        onClick("caseBonus"+i, () => {
-            if (compteurArbre.value >= database.bonus[i].prix) {
-                compteurArbre.value = compteurArbre.value - database.bonus[i].prix;
-                compteurArbre.text = Math.round(compteurArbre.value * 10)/10; 
-                database.bonus[i].quantite += 1;
-                queryDB();
-                updatePrix();
-                CaseQuantite.text = database.bonus[i].quantite;    
-                CasePrix.text = Math.round(database.bonus[i].prix);
-                console.log(database.bonus[i].name + " acheté");
-                play("buy")
-                
-            }  
-        });
-
-    }
-
-    const treeButton = add([
-        sprite("treeButton"),
-        pos(width()/ 2.54, height() / 1.6),
-        anchor("center"),
-        scale(scaleRatio*0.77),
+    // Cut button
+    cutButton = add([
+        rect(200, 50),
+        pos(300, 450),
+        color(0, 200, 0),
         area(),
-        "treeButton"
-         
+        "cutButton",
+        {
+            update() {
+                const progress = Math.min(1, (time() - lastCutTime) / cutDelay);
+                this.color = trees > 0 && progress < 1
+                    ? rgb(255 * (1 - progress), 255 * progress, 0)
+                    : rgb(0, 200, 0);
+            },
+        },
     ]);
 
-    onKeyPress("space", (t) => {
-        play("woodcrack")
-        abattreArbre();
-        function zoomOut(t){
-            t.width  = t.width   * CLICK_JUMP;
-            t.height = t.height  * CLICK_JUMP;
-            wait(0.1, () => {
-                t.width  = t.width  / CLICK_JUMP;
-                t.height = t.height / CLICK_JUMP;
-            })
-        }
-        zoomOut(t); 
-    })
+    cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(cutButton.width / 2, cutButton.height / 2), "buttonText"]);
 
-    onClick("treeButton", (t) => {
-        play("woodcrack")
-        abattreArbre();
-        function zoomOut(t){
-            t.width  = t.width   * CLICK_JUMP;
-            t.height = t.height  * CLICK_JUMP;
-            wait(0.1, () => {
-                t.width  = t.width  / CLICK_JUMP;
-                t.height = t.height / CLICK_JUMP;
-            })
+    // Tool button
+    toolButton = add([
+        rect(200, 50),
+        pos(300, 520),
+        color(200, 200, 0),
+        area(),
+        "toolButton",
+    ]);
+    toolButton.add([text("Buy Tool", { size: 20 }), anchor("center"), pos(toolButton.width / 2, toolButton.height / 2)]);
+
+    // Replant button
+    replantButton = add([
+        rect(200, 50),
+        pos(300, 590),
+        color(0, 100, 200),
+        area(),
+        "replantButton",
+    ]);
+    replantButton.add([text("Replant Tree", { size: 20 }), anchor("center"), pos(replantButton.width / 2, replantButton.height / 2)]);
+
+    // Game loop
+    onUpdate(() => {
+        timeLeft -= dt();
+        if (timeLeft <= 0) {
+            endGame();
         }
-        zoomOut(t);
-        
-        
-        
+        checkReplantedTrees();
+        updateUI();
     });
 
-    function abattreArbre(){
-        vitesseAbattage = 1 + vitesseDonneeParBonus;
-        console.log(vitesseAbattage);
-        compteurArbre.value = compteurArbre.value + vitesseAbattage * efficacite;
-        compteurArbre.arbreTotal = compteurArbre.arbreTotal + vitesseAbattage * efficacite;
-        compteurArbre.text = Math.round(compteurArbre.value * 10)/10;
-        console.log("nombre d'arbres abattus: " + compteurArbre.value);
-        verifierPuissanceDeQuatre(compteurArbre.arbreTotal);
-        
-    }
-    
-  
+    // Forest regeneration
+    loop(1, regenerateForest);
 
-    let historiquePuissancesDeQuatre = new Set();
+    // Button actions
+    onClick("cutButton", () => {
+        cutTree();
+    });
 
-    function verifierPuissanceDeQuatre(quantiteCookies) {
-        let puissanceActuelle = 150;
-        while (puissanceActuelle <= quantiteCookies) {
-            if (!historiquePuissancesDeQuatre.has(puissanceActuelle)) {
-                console.log(`Félicitations ! Vous avez atteint ou dépassé ${puissanceActuelle} cookies, une puissance de 2.`);
-                historiquePuissancesDeQuatre.add(puissanceActuelle);
-                efficacite = efficacite * 0.32;
-                shake(240);
-                removeTopLayer();
-                play("boom");
-                if (puissanceActuelle > 8700) {
-                    
-                    go("fin")
-                }
-                
-            }
-            puissanceActuelle *= 3.95;
-        }
-    }   
-    // cette fonction a été générée avec l'aide de chatGPT, voici le prompt utilisé: fais moi une fonction js qui vérifie si x a atteint ou dépassé une puissance de 4 non encore atteinte par le passé. Le résultat de chatGPT ne correspond pas tout à fait les variables doivent notamment être adaptées
+    onClick("toolButton", () => {
+        buyTool();
+    });
 
+    onClick("replantButton", () => {
+        replantTree();
+    });
+
+    // Initialize game state
+    updateTreePrice();
+    updateUI();
 });
 
-scene("fin", () => {
-    const img = add([
-        sprite("layer9"),
-        pos(width() / 2, height() / 2),
-        anchor("center"),
-        scale(scaleRatio),
-      ]);
-      const img2 = add([
-        sprite("layer1"),
-        pos(width() / 2, height() / 2),
-        anchor("center"),
-        scale(scaleRatio),
-      ]);
-      const texte = add([
-        text("Quand il n’y a plus d’arbres, il n’y a plus de victoire. Pourquoi vouloir continuer ?",{
-            width: width() - pad * 2,
-		align: "center",
-		lineSpacing: 8,
-		letterSpacing: 4,
-        font: "uphea",
-            size: 72
-        }),
-        pos(24, 130),
-
-    
-        
-        
-    ])
-    const play = add([
-        sprite("play"),
-        anchor("center"),
-        scale(0.4),
-        pos(width() / 2, height() / 2),
-        area(),
-        "play"
 
 
-         
-         
-     ])
-   
-    onClick("play", () => {
-        resetQuantite(database);
-        var compteurArgent = 0;
-        var prixArbre = 1;
-        var vitesseAbattage = 1;
-        var efficacite = 1;
-        go("main")
-    });
-
-    onKeyPress("space", (t) => {
-        resetQuantite(database);
-        var compteurArgent = 0;
-        var prixArbre = 1;
-        var vitesseAbattage = 1;
-        var efficacite = 1;
-        go("pageAcceuil")
-    })
-})
-
-
-
-scene("pageAcceuil", () => {
-    scaleRatioTitre = document.documentElement.clientWidth / 1920
-    const img = add([
-       sprite("titre"),
-       anchor("center"),
-       pos(width()/2, height() / 2),
-       scale(scaleRatioTitre)
-        
-        
-    ])
-    const play = add([
-        sprite("play"),
-        anchor("center"),
-        scale(0.4),
-        pos(width() / 2, height() / 2),
-        area(),
-        "play"
-
-
-         
-         
-     ])
-    onKeyPress("space", (t) => {
-        go("acceuil")
-    })
-    onClick("play", () => {
-        go("acceuil")
-    });
-
-})
-
-// Lancement de l'acceuil
-go("pageAcceuil")
