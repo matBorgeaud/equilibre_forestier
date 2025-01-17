@@ -4,65 +4,186 @@ kaboom({
     fullscreen: true,
 });
 
-// Game constants
+// === CONSTANTS ===
 const GAME_DURATION = 300; // 5 minutes in seconds
 const INITIAL_TREES = 100;
 const INITIAL_MONEY = 0;
 const INITIAL_TREE_PRICE = 50;
-const TREE_PRICE_MULTIPLIER = 1.1; // Price increases as trees are cut
-const REGEN_RATE = 0.01; // Percentage of forest regenerated per second
-const INITIAL_TOOL_PRICE = 100; // Initial price of the tool
-const TOOL_PRICE_INCREASE = 1.15; // Price increase per purchase
-const TOOL_CUT_DELAY_REDUCTION = 0.1; // Reduction in cut delay per tool
-const REPLANT_COST = 200; // Cost to replant trees
-const REPLANT_TIME = 60; // Time for replanted trees to grow (in seconds)
+const TREE_PRICE_MULTIPLIER = 1.1;
+const REGEN_RATE = 0.01;
+const INITIAL_TOOL_PRICE = 100;
+const TOOL_PRICE_INCREASE = 1.15;
+const TOOL_CUT_DELAY_REDUCTION = 0.1;
+const REPLANT_COST = 200;
+const REPLANT_TIME = 60;
+const BOYCOTT_THRESHOLD = 20; // Difference between cut and replanted trees
+const BOYCOTT_COST = 500; // Cost to buy public opinion
+const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
+const PROTECTED_TREES = 10; // Trees protected by reserve
 
-// Game state
+// === GAME STATE ===
 let trees = INITIAL_TREES;
 let money = INITIAL_MONEY;
 let treePrice = INITIAL_TREE_PRICE;
 let toolPrice = INITIAL_TOOL_PRICE;
 let timeLeft = GAME_DURATION;
-
-// Delays
 let cutDelay = 2; // Delay in seconds for cutting a tree
 let lastCutTime = 0;
-
-// Replanting state
 let replantQueue = [];
+let boycottProgress = 0;
+let inBoycott = false;
+let protectedTrees = 0;
 
-// UI Elements
-let treesLabel, moneyLabel, timeLabel, cutButton, toolButton, replantButton;
+// === SPRITE LOADING ===
+loadSprite("tree", "assets/image/tree_2.png");
 
-// Helper functions
+let treeSprites = [];
+
+// === HELPER FUNCTIONS ===
+
+// Update the price of a tree based on the number left
 function updateTreePrice() {
     treePrice = Math.floor(INITIAL_TREE_PRICE * Math.pow(TREE_PRICE_MULTIPLIER, INITIAL_TREES - trees));
 }
 
-function cutTree() {
-    if (trees > 0 && time() - lastCutTime > cutDelay) {
-        trees--;
-        money += treePrice;
-        updateTreePrice();
-        lastCutTime = time();
-        console.log("Tree cut! Money earned: $", treePrice);
-        updateUI();
-    } else if (trees <= 0) {
-        console.log("No more trees to cut!");
-    } else {
-        console.log("Please wait before cutting another tree.");
+// Dynamically add new trees to the screen
+function addNewTrees(count) {
+    const screenWidth = width();
+    const screenHeight = height();
+    const marginX = screenWidth * 0.1; // 10% margin on sides
+    const marginTop = screenHeight * 0.1; // 10% margin on top
+    const marginBottom = screenHeight * 0.2; // 20% margin on bottom
+    const areaWidth = screenWidth - 2 * marginX;
+    const areaHeight = screenHeight - marginTop - marginBottom;
+
+    // Calculate tree size dynamically
+    const maxTrees = 200;
+    const treeWidth = Math.sqrt((areaWidth * areaHeight) / maxTrees);
+    const treeHeight = treeWidth * (122 / 110); // Keep original aspect ratio
+
+    // Generate positions for new trees
+    let positions = treeSprites.map(tree => tree.pos);
+    for (let i = 0; i < count; i++) {
+        let x, y, valid;
+        do {
+            x = Math.random() * (areaWidth - treeWidth) + marginX;
+            y = Math.random() * (areaHeight - treeHeight) + marginTop;
+            valid = positions.every(pos => {
+                const dx = x - pos.x;
+                const dy = y - pos.y;
+                return Math.sqrt(dx * dx + dy * dy) > treeWidth;
+            });
+        } while (!valid);
+        positions.push({ x, y });
+
+        // Add new tree sprite
+        const treeSprite = add([
+            sprite("tree", { width: treeWidth, height: treeHeight }),
+            pos(x, y),
+        ]);
+        treeSprites.push(treeSprite);
     }
 }
 
-function buyTool() {
-    if (money >= toolPrice) {
-        money -= toolPrice;
-        cutDelay = Math.max(0.5, cutDelay - TOOL_CUT_DELAY_REDUCTION); // Prevent cutDelay from going below 0.5s
-        toolPrice = Math.floor(toolPrice * TOOL_PRICE_INCREASE);
-        console.log("Tool purchased! New cut delay: ", cutDelay, "s. Next tool price: $", toolPrice);
+// Remove trees from the screen
+function removeTrees(count) {
+    for (let i = 0; i < count; i++) {
+        const tree = treeSprites.pop();
+        if (tree) destroy(tree);
+    }
+}
+
+// Update the entire UI
+function updateUI() {
+    treesLabel.text = `Trees: ${trees}`;
+    moneyLabel.text = `Money: $${money}`;
+    timeLabel.text = `Time Left: ${Math.ceil(timeLeft)}s`;
+
+    // Mise à jour de la barre de boycott
+    const boycottEmoji = boycottProgress >= 0.8 ? "⚠️" : boycottProgress >= 0.5 ? "❗" : "🌲";
+    boycottLabel.text = `${boycottEmoji} Boycott Risk`;
+
+    // Ajustement de la barre de progression
+    boycottBar.width = Math.max(1, boycottBarMaxWidth * boycottProgress);
+    boycottBar.pos.x = boycottBarContainer.pos.x + (boycottBarContainer.width - boycottBar.width) / 2;
+}
+
+// Trigger boycott consequences
+function triggerBoycott() {
+    inBoycott = true;
+    const boycottPopup = add([
+        rect(width() * 0.6, height() * 0.4),
+        pos(width() * 0.2, height() * 0.3),
+        color(50, 50, 50),
+        outline(4, rgb(200, 0, 0)),
+    ]);
+
+    add([text("Boycott!", { size: 32, color: rgb(255, 255, 255) }), pos(width() * 0.4, height() * 0.35)]);
+
+    const buyOpinionButton = add([
+        rect(200, 50),
+        pos(width() * 0.25, height() * 0.5),
+        color(0, 200, 0),
+        area(),
+        "buyOpinionButton",
+    ]);
+    buyOpinionButton.add([text("Buy Opinion ($500)", { size: 16 }), pos(20, 15)]);
+
+    const loseTimeButton = add([
+        rect(200, 50),
+        pos(width() * 0.55, height() * 0.5),
+        color(200, 0, 0),
+        area(),
+        "loseTimeButton",
+    ]);
+    loseTimeButton.add([text("Lose 30s", { size: 16 }), pos(40, 15)]);
+
+    onClick("buyOpinionButton", () => {
+        if (money >= BOYCOTT_COST) {
+            money -= BOYCOTT_COST;
+            inBoycott = false;
+            destroy(boycottPopup);
+            destroy(buyOpinionButton);
+            destroy(loseTimeButton);
+            updateUI();
+        }
+    });
+
+    onClick("loseTimeButton", () => {
+        timeLeft -= 30;
+        inBoycott = false;
+        destroy(boycottPopup);
+        destroy(buyOpinionButton);
+        destroy(loseTimeButton);
         updateUI();
-    } else {
-        console.log("Not enough money to buy the tool. Current money: $", money);
+    });
+}
+
+// Create a nature reserve
+function createNatureReserve() {
+    if (money >= NATURE_RESERVE_COST) {
+        money -= NATURE_RESERVE_COST;
+        protectedTrees += PROTECTED_TREES;
+        updateUI();
+    }
+}
+
+// === ACTION FUNCTIONS ===
+
+function cutTree() {
+    if (trees > protectedTrees && time() - lastCutTime > cutDelay) {
+        trees--;
+        removeTrees(1);
+        money += treePrice;
+        updateTreePrice();
+        lastCutTime = time();
+        boycottProgress += 1 / BOYCOTT_THRESHOLD;
+        if (boycottProgress >= 1 && !inBoycott) {
+            triggerBoycott();
+        }
+        updateUI();
+    } else if (trees <= protectedTrees) {
+        console.log("No more trees to cut! Some trees are protected.");
     }
 }
 
@@ -70,103 +191,118 @@ function replantTree() {
     if (money >= REPLANT_COST) {
         money -= REPLANT_COST;
         replantQueue.push(time() + REPLANT_TIME);
-        console.log("Tree replanted! It will grow in 1 minute.");
+        boycottProgress = Math.max(0, boycottProgress - 0.1);
         updateUI();
-    } else {
-        console.log("Not enough money to replant a tree. Current money: $", money);
     }
 }
 
+function buyTool() {
+    if (money >= toolPrice) {
+        money -= toolPrice;
+        cutDelay = Math.max(0.5, cutDelay - TOOL_CUT_DELAY_REDUCTION);
+        toolPrice = Math.floor(toolPrice * TOOL_PRICE_INCREASE);
+        updateUI();
+    }
+}
+
+// Check if replanted trees are ready to grow
 function checkReplantedTrees() {
     const now = time();
-    replantQueue = replantQueue.filter(growTime => {
-        if (now >= growTime) {
-            trees++;
-            console.log("A replanted tree has grown! Trees available: ", trees);
-            return false;
-        }
-        return true;
-    });
-    updateTreePrice();
-}
-
-function regenerateForest() {
-    trees += Math.floor(trees * REGEN_RATE);
-    if (trees > INITIAL_TREES) trees = INITIAL_TREES;
-    updateTreePrice();
-    console.log("Forest regenerated. Trees available: ", trees);
-}
-
-function updateUI() {
-    treesLabel.text = `Trees: ${trees}`;
-    moneyLabel.text = `Money: $${money}`;
-    timeLabel.text = `Time Left: ${Math.ceil(timeLeft)}s`;
-    const progress = Math.min(1, (time() - lastCutTime) / cutDelay);
-    cutButton.color = trees > 0 && progress < 1
-        ? rgb(255 * (1 - progress), 255 * progress, 0)
-        : rgb(0, 200, 0);
-    cutButton.get("buttonText")[0].text = trees > 0 && progress < 1
-        ? `Cutting... ${Math.floor(progress * 100)}%`
-        : "Cut Tree";
-}
-
-function endGame() {
-    if (trees === 0) {
-        go("end", "defeat");
-    } else if (money >= 10000 && trees >= 20) {
-        go("end", "victory");
-    } else {
-        go("end", "timeout");
+    const grownTrees = replantQueue.filter(growTime => now >= growTime);
+    if (grownTrees.length > 0) {
+        replantQueue = replantQueue.filter(growTime => now < growTime);
+        trees += grownTrees.length;
+        addNewTrees(grownTrees.length);
+        updateTreePrice();
+        updateUI();
     }
 }
 
-// Main game scene
-scene("main", () => {
-    // Labels
-    treesLabel = add([text("Trees: 0", { size: 24 }), pos(20, 20)]);
-    moneyLabel = add([text("Money: $0", { size: 24 }), pos(20, 50)]);
-    timeLabel = add([text("Time Left: 0s", { size: 24 }), pos(20, 80)]);
+// Regenerate the forest over time
+function regenerateForest() {
+    const regeneratedTrees = Math.floor(trees * REGEN_RATE);
+    const treesToAdd = Math.min(regeneratedTrees, INITIAL_TREES - trees);
+    trees += treesToAdd;
+    addNewTrees(treesToAdd);
+    updateTreePrice();
+    updateUI();
+}
 
-    // Cut button
+// === MAIN GAME SCENE ===
+
+scene("main", () => {
+     // UI Elements
+     // UI Elements
+     treesLabel = add([text("Trees: 0", { size: 24 }), pos(20, 20)]);
+     moneyLabel = add([text("Money: $0", { size: 24 }), pos(20, 50)]);
+     timeLabel = add([text("Time Left: 0s", { size: 24 }), pos(20, 80)]);
+ 
+     // Boycott Risk UI
+     boycottLabel = add([text("🌲 Boycott Risk", { size: 24 }), pos(20, 110)]);
+ 
+     // Conteneur pour la barre de progression avec cadre
+     const boycottBarWidth = width() * 0.2; // Réduction de la longueur totale
+     const boycottBarHeight = 20;
+     boycottBarMaxWidth = boycottBarWidth;
+ 
+     boycottBarContainer = add([
+         rect(boycottBarWidth, boycottBarHeight), // Conteneur avec cadre
+         pos(200, 115), // Position ajustée
+         outline(2, rgb(0, 0, 0)), // Ajout d'un cadre noir
+         color(200, 200, 200), // Couleur de fond gris clair
+     ]);
+ 
+     // Barre intérieure (progrès)
+     boycottBar = add([
+         rect(1, boycottBarHeight - 4), // Ajustement pour qu'elle soit à l'intérieur du cadre
+         pos(boycottBarContainer.pos.x + 2, boycottBarContainer.pos.y + 2),
+         color(50, 50, 50), // Couleur gris foncé
+     ]);
+ 
+
+    // Button dimensions
+    const buttonWidth = width() * 0.2;
+    const buttonHeight = height() * 0.06;
+    const buttonY = height() - buttonHeight - 20;
+
+    // Buttons
     cutButton = add([
-        rect(200, 50),
-        pos(300, 450),
+        rect(buttonWidth, buttonHeight),
+        pos(width() * 0.05, buttonY),
         color(0, 200, 0),
         area(),
         "cutButton",
-        {
-            update() {
-                const progress = Math.min(1, (time() - lastCutTime) / cutDelay);
-                this.color = trees > 0 && progress < 1
-                    ? rgb(255 * (1 - progress), 255 * progress, 0)
-                    : rgb(0, 200, 0);
-            },
-        },
     ]);
+    cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2), "buttonText"]);
 
-    cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(cutButton.width / 2, cutButton.height / 2), "buttonText"]);
-
-    // Tool button
     toolButton = add([
-        rect(200, 50),
-        pos(300, 520),
+        rect(buttonWidth, buttonHeight),
+        pos(width() * 0.3, buttonY),
         color(200, 200, 0),
         area(),
         "toolButton",
     ]);
-    toolButton.add([text("Buy Tool", { size: 20 }), anchor("center"), pos(toolButton.width / 2, toolButton.height / 2)]);
+    toolButton.add([text("Buy Tool", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
-    // Replant button
     replantButton = add([
-        rect(200, 50),
-        pos(300, 590),
+        rect(buttonWidth, buttonHeight),
+        pos(width() * 0.55, buttonY),
         color(0, 100, 200),
         area(),
         "replantButton",
     ]);
-    replantButton.add([text("Replant Tree", { size: 20 }), anchor("center"), pos(replantButton.width / 2, replantButton.height / 2)]);
+    replantButton.add([text("Replant Tree", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
-    // Game loop
+    reserveButton = add([
+        rect(buttonWidth, buttonHeight),
+        pos(width() * 0.8, buttonY),
+        color(100, 50, 200),
+        area(),
+        "reserveButton",
+    ]);
+    reserveButton.add([text("Reserve ($1000)", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
+
+    // Game Loop
     onUpdate(() => {
         timeLeft -= dt();
         if (timeLeft <= 0) {
@@ -180,22 +316,16 @@ scene("main", () => {
     loop(1, regenerateForest);
 
     // Button actions
-    onClick("cutButton", () => {
-        cutTree();
-    });
+    onClick("cutButton", cutTree);
+    onClick("toolButton", buyTool);
+    onClick("replantButton", replantTree);
+    onClick("reserveButton", createNatureReserve);
 
-    onClick("toolButton", () => {
-        buyTool();
-    });
-
-    onClick("replantButton", () => {
-        replantTree();
-    });
-
-    // Initialize game state
+    // Initialize game
+    addNewTrees(trees);
     updateTreePrice();
     updateUI();
 });
 
-
-
+// Start the game
+go("main");
