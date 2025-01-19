@@ -111,66 +111,80 @@ function updateUI() {
 
 // Trigger boycott consequences
 function triggerBoycott() {
-    inBoycott = true;
-    const popupWidth = width() * 0.6;
-    const popupHeight = height() * 0.4;
-    const popupX = width() * 0.2;
-    const popupY = height() * 0.3;
+    const screenWidth = width();
+    const screenHeight = height();
+    const imageWidth = 500;
+    const imageHeight = 500;
 
-    const boycottPopup = add([
-        rect(popupWidth, popupHeight),
-        pos(popupX, popupY),
-        color(50, 50, 50),
-        outline(4, rgb(200, 0, 0)),
-        "boycottPopup"
-    ]);
+    // Calculate the position to center the image
+    const x = (screenWidth - imageWidth) / 2;
+    const y = (screenHeight - imageHeight) / 2;
 
-    add([text("Boycott!", { size: 32, color: rgb(255, 255, 255) }), pos(popupX + popupWidth / 2 - 50, popupY + 20)]);
+    console.log(`Screen: ${screenWidth}x${screenHeight}, Image: ${imageWidth}x${imageHeight}, Position: (${x}, ${y})`);
 
-    const boycottImage = add([
-        sprite("boycott", { width: popupWidth * 0.8, height: popupHeight * 0.5 }),
-        pos(popupX + popupWidth * 0.1, popupY + 60),
-    ]);
+    // Ensure the image is within bounds
+    if (x >= 0 && y >= 0 && x + imageWidth <= screenWidth && y + imageHeight <= screenHeight) {
+        // Add boycott image
+        add([
+            sprite("boycott"),
+            pos(x, y),
+            scale(1),
+            layer("ui"),
+        ]);
 
-    const payButton = add([
-        rect(150, 50),
-        pos(popupX + popupWidth * 0.25, popupY + popupHeight - 70),
-        color(0, 200, 0),
-        area(),
-        "payButton"
-    ]);
-    payButton.add([text("Pay $500", { size: 20 }), anchor("center"), pos(75, 25)]);
+        // Add option buttons
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+        const buttonY = y + imageHeight + 20;
 
-    const timeButton = add([
-        rect(150, 50),
-        pos(popupX + popupWidth * 0.55, popupY + popupHeight - 70),
-        color(200, 0, 0),
-        area(),
-        "timeButton"
-    ]);
-    timeButton.add([text("Lose 30s", { size: 20 }), anchor("center"), pos(75, 25)]);
+        // Option 1 Button
+        add([
+            rect(buttonWidth, buttonHeight),
+            pos(x, buttonY),
+            color(0, 0, 255),
+            area(),
+            layer("ui"),
+            "option1",
+        ]);
 
-    onClick("payButton", () => {
-        if (money >= BOYCOTT_COST) {
-            money -= BOYCOTT_COST;
-            destroy(boycottPopup);
-            destroy(boycottImage);
-            destroy(payButton);
-            destroy(timeButton);
-            inBoycott = false;
-            updateUI();
-        }
-    });
+        // Option 2 Button
+        add([
+            rect(buttonWidth, buttonHeight),
+            pos(x + buttonWidth + 20, buttonY),
+            color(0, 255, 0),
+            area(),
+            layer("ui"),
+            "option2",
+        ]);
 
-    onClick("timeButton", () => {
-        timeLeft = Math.max(0, timeLeft - 30);
-        destroy(boycottPopup);
-        destroy(boycottImage);
-        destroy(payButton);
-        destroy(timeButton);
-        inBoycott = false;
-        updateUI();
-    });
+        // Add text to buttons
+        add([
+            text("Option 1"),
+            pos(x + buttonWidth / 2, buttonY + buttonHeight / 2),
+            origin("center"),
+            layer("ui"),
+        ]);
+
+        add([
+            text("Option 2"),
+            pos(x + buttonWidth + 20 + buttonWidth / 2, buttonY + buttonHeight / 2),
+            origin("center"),
+            layer("ui"),
+        ]);
+
+        // Handle button clicks
+        onClick("option1", () => {
+            console.log("Option 1 selected");
+            // Add your logic for Option 1 here
+        });
+
+        onClick("option2", () => {
+            console.log("Option 2 selected");
+            // Add your logic for Option 2 here
+        });
+    } else {
+        console.error("Image position is out of bounds");
+    }
 }
 
 // Create a nature reserve
@@ -284,7 +298,7 @@ scene("main", () => {
         area(),
         "cutButton",
     ]);
-    const cutButtonText = cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2), "buttonText"]);
+    const cutButtonText = cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
     const toolButton = add([
         rect(buttonWidth, buttonHeight),
@@ -293,7 +307,7 @@ scene("main", () => {
         area(),
         "toolButton",
     ]);
-    const toolButtonText = toolButton.add([text(`Buy Tool ($${toolPrice})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2), "buttonText"]);
+    const toolButtonText = toolButton.add([text(`Buy Tool ($${toolPrice})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
     const replantButton = add([
         rect(buttonWidth, buttonHeight),
@@ -302,7 +316,7 @@ scene("main", () => {
         area(),
         "replantButton",
     ]);
-    const replantButtonText = replantButton.add([text(`Replant Tree ($${REPLANT_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2), "buttonText"]);
+    const replantButtonText = replantButton.add([text(`Replant Tree ($${REPLANT_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
     const reserveButton = add([
         rect(buttonWidth, buttonHeight),
@@ -311,7 +325,7 @@ scene("main", () => {
         area(),
         "reserveButton",
     ]);
-    const reserveButtonText = reserveButton.add([text(`Create Reserve ($${NATURE_RESERVE_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2), "buttonText"]);
+    const reserveButtonText = reserveButton.add([text(`Create Reserve ($${NATURE_RESERVE_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
     // === UPDATE BUTTON COLOR AND TEXT BASED ON CUT DELAY ===
     function updateCutButton() {
