@@ -16,10 +16,11 @@ const TOOL_PRICE_INCREASE = 1.15;
 const TOOL_CUT_DELAY_REDUCTION = 0.1;
 const REPLANT_COST = 200;
 const REPLANT_TIME = 60;
-const BOYCOTT_THRESHOLD = 20; // Difference between cut and replanted trees
-const BOYCOTT_COST = 500; // Cost to buy public opinion
 const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
 const PROTECTED_TREES = 10; // Trees protected by reserve
+const BOYCOTT_THRESHOLD = 6;
+const BOYCOTT_PENALTY_TIME = 30;
+const BOYCOTT_PENALTY_MULTIPLIER = 8;
 
 // === GAME STATE ===
 let trees = INITIAL_TREES;
@@ -30,13 +31,11 @@ let timeLeft = GAME_DURATION;
 let cutDelay = 2; // Delay in seconds for cutting a tree
 let lastCutTime = -cutDelay; // Initialize to allow immediate cutting
 let replantQueue = [];
-let boycottProgress = 0;
-let inBoycott = false;
 let protectedTrees = 0;
+let treesCut = 0;
 
 // === SPRITE LOADING ===
 loadSprite("tree", "assets/image/tree_2.png");
-loadSprite("boycott", "assets/image/newspaper.png"); // Load the boycott image
 
 let treeSprites = [];
 
@@ -96,95 +95,10 @@ function removeTrees(count) {
 
 // Update the entire UI
 function updateUI() {
+    // Mise à jour des étiquettes
     treesLabel.text = `Trees: ${trees}`;
     moneyLabel.text = `Money: $${money}`;
     timeLabel.text = `Time Left: ${Math.ceil(timeLeft)}s`;
-
-    // Mise à jour de la barre de boycott
-    const boycottEmoji = boycottProgress >= 0.8 ? "⚠️" : boycottProgress >= 0.5 ? "❗" : "🌲";
-    boycottLabel.text = `${boycottEmoji} Boycott Risk`;
-
-    // Ajustement de la barre de progression
-    boycottBar.width = Math.max(1, boycottBarMaxWidth * boycottProgress);
-    boycottBar.pos.x = boycottBarContainer.pos.x + (boycottBarContainer.width - boycottBar.width) / 2;
-}
-
-// Trigger boycott consequences
-function triggerBoycott() {
-    const screenWidth = width();
-    const screenHeight = height();
-    const imageWidth = 500;
-    const imageHeight = 500;
-
-    // Calculate the position to center the image
-    const x = (screenWidth - imageWidth) / 2;
-    const y = (screenHeight - imageHeight) / 2;
-
-    console.log(`Screen: ${screenWidth}x${screenHeight}, Image: ${imageWidth}x${imageHeight}, Position: (${x}, ${y})`);
-
-    // Ensure the image is within bounds
-    if (x >= 0 && y >= 0 && x + imageWidth <= screenWidth && y + imageHeight <= screenHeight) {
-        // Add boycott image
-        add([
-            sprite("boycott"),
-            pos(x, y),
-            scale(1),
-            layer("ui"),
-        ]);
-
-        // Add option buttons
-        const buttonWidth = 200;
-        const buttonHeight = 50;
-        const buttonY = y + imageHeight + 20;
-
-        // Option 1 Button
-        add([
-            rect(buttonWidth, buttonHeight),
-            pos(x, buttonY),
-            color(0, 0, 255),
-            area(),
-            layer("ui"),
-            "option1",
-        ]);
-
-        // Option 2 Button
-        add([
-            rect(buttonWidth, buttonHeight),
-            pos(x + buttonWidth + 20, buttonY),
-            color(0, 255, 0),
-            area(),
-            layer("ui"),
-            "option2",
-        ]);
-
-        // Add text to buttons
-        add([
-            text("Option 1"),
-            pos(x + buttonWidth / 2, buttonY + buttonHeight / 2),
-            origin("center"),
-            layer("ui"),
-        ]);
-
-        add([
-            text("Option 2"),
-            pos(x + buttonWidth + 20 + buttonWidth / 2, buttonY + buttonHeight / 2),
-            origin("center"),
-            layer("ui"),
-        ]);
-
-        // Handle button clicks
-        onClick("option1", () => {
-            console.log("Option 1 selected");
-            // Add your logic for Option 1 here
-        });
-
-        onClick("option2", () => {
-            console.log("Option 2 selected");
-            // Add your logic for Option 2 here
-        });
-    } else {
-        console.error("Image position is out of bounds");
-    }
 }
 
 // Create a nature reserve
@@ -192,6 +106,7 @@ function createNatureReserve() {
     if (money >= NATURE_RESERVE_COST) {
         money -= NATURE_RESERVE_COST;
         protectedTrees += PROTECTED_TREES;
+        treesCut = Math.max(0, treesCut - 8);
         updateUI();
     }
 }
@@ -201,15 +116,15 @@ function createNatureReserve() {
 function cutTree() {
     if (trees > protectedTrees && time() - lastCutTime > cutDelay) {
         trees--;
+        treesCut++;
         removeTrees(1);
         money += treePrice;
         updateTreePrice();
         lastCutTime = time();
-        boycottProgress += 1 / BOYCOTT_THRESHOLD;
-        if (boycottProgress >= 1 && !inBoycott) {
+        updateUI();
+        if (treesCut >= BOYCOTT_THRESHOLD) {
             triggerBoycott();
         }
-        updateUI();
     } else if (trees <= protectedTrees) {
         console.log("No more trees to cut! Some trees are protected.");
     }
@@ -219,7 +134,7 @@ function replantTree() {
     if (money >= REPLANT_COST) {
         money -= REPLANT_COST;
         replantQueue.push(time() + REPLANT_TIME);
-        boycottProgress = Math.max(0, boycottProgress - 0.1);
+        treesCut = Math.max(0, treesCut - 0.5);
         updateUI();
     }
 }
@@ -256,6 +171,83 @@ function regenerateForest() {
     updateUI();
 }
 
+// Trigger boycott
+function triggerBoycott() {
+    const boycottPopup = add([
+        rect(width() * 0.8, height() * 0.4),
+        pos(width() * 0.1, height() * 0.3),
+        color(255, 255, 255),
+        area(),
+        "boycottPopup",
+    ]);
+    const boycottText = boycottPopup.add([
+        text("You have cut too many trees! Choose a penalty:", { size: 24 }),
+        pos(20, 20),
+    ]);
+    const timePenaltyButton = boycottPopup.add([
+        rect(width() * 0.35, height() * 0.1),
+        pos(20, 80),
+        color(255, 0, 0),
+        area(),
+        "timePenaltyButton",
+    ]);
+    const timePenaltyText = timePenaltyButton.add([
+        text("Lose 30 seconds", { size: 20 }),
+        anchor("center"),
+        pos(width() * 0.35 / 2, height() * 0.1 / 2),
+    ]);
+    const moneyPenaltyButton = boycottPopup.add([
+        rect(width() * 0.35, height() * 0.1),
+        pos(width() * 0.4, 80),
+        color(0, 255, 0),
+        area(),
+        "moneyPenaltyButton",
+    ]);
+    const moneyPenaltyText = moneyPenaltyButton.add([
+        text(`Pay $${treePrice * BOYCOTT_PENALTY_MULTIPLIER}`, { size: 20 }),
+        anchor("center"),
+        pos(width() * 0.35 / 2, height() * 0.1 / 2),
+    ]);
+
+    // Pause the game
+    const originalCutDelay = cutDelay;
+    cutDelay = Infinity;
+    const originalTimeLeft = timeLeft;
+
+    // Disable other buttons
+    cutButton.area.enabled = false;
+    toolButton.area.enabled = false;
+    replantButton.area.enabled = false;
+    reserveButton.area.enabled = false;
+
+    timePenaltyButton.onClick(() => {
+        timeLeft = originalTimeLeft - BOYCOTT_PENALTY_TIME;
+        destroy(boycottPopup);
+        cutDelay = originalCutDelay; // Resume the game
+        treesCut = 0; // Reset the counter
+        // Enable other buttons
+        cutButton.area.enabled = true;
+        toolButton.area.enabled = true;
+        replantButton.area.enabled = true;
+        reserveButton.area.enabled = true;
+    });
+
+    moneyPenaltyButton.onClick(() => {
+        if (money >= treePrice * BOYCOTT_PENALTY_MULTIPLIER) {
+            money -= treePrice * BOYCOTT_PENALTY_MULTIPLIER;
+            destroy(boycottPopup);
+            cutDelay = originalCutDelay; // Resume the game
+            timeLeft = originalTimeLeft;
+            treesCut = 0; // Reset the counter
+            // Enable other buttons
+            cutButton.area.enabled = true;
+            toolButton.area.enabled = true;
+            replantButton.area.enabled = true;
+            reserveButton.area.enabled = true;
+        }
+    });
+}
+
 // === MAIN GAME SCENE ===
 scene("main", () => {
     // UI Elements
@@ -263,35 +255,13 @@ scene("main", () => {
     moneyLabel = add([text("Money: $0", { size: 24 }), pos(20, 50)]);
     timeLabel = add([text("Time Left: 0s", { size: 24 }), pos(20, 80)]);
 
-    // Boycott Risk UI
-    boycottLabel = add([text("🌲 Boycott Risk", { size: 24 }), pos(20, 110)]);
-
-    // Conteneur pour la barre de progression avec cadre
-    const boycottBarWidth = width() * 0.2; // Réduction de la longueur totale
-    const boycottBarHeight = 20;
-    boycottBarMaxWidth = boycottBarWidth;
-
-    boycottBarContainer = add([
-        rect(boycottBarWidth, boycottBarHeight), // Conteneur avec cadre
-        pos(200, 115), // Position ajustée
-        outline(2, rgb(0, 0, 0)), // Ajout d'un cadre noir
-        color(200, 200, 200), // Couleur de fond gris clair
-    ]);
-
-    // Barre intérieure (progrès)
-    boycottBar = add([
-        rect(1, boycottBarHeight - 4), // Ajustement pour qu'elle soit à l'intérieur du cadre
-        pos(boycottBarContainer.pos.x + 2, boycottBarContainer.pos.y + 2),
-        color(50, 50, 50), // Couleur gris foncé
-    ]);
-
     // Button dimensions
     const buttonWidth = width() * 0.2;
     const buttonHeight = height() * 0.06;
     const buttonY = height() - buttonHeight - 20;
 
     // Buttons
-    const cutButton = add([
+    cutButton = add([
         rect(buttonWidth, buttonHeight),
         pos(width() * 0.05, buttonY),
         color(255, 0, 0),
@@ -300,7 +270,7 @@ scene("main", () => {
     ]);
     const cutButtonText = cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
-    const toolButton = add([
+    toolButton = add([
         rect(buttonWidth, buttonHeight),
         pos(width() * 0.3, buttonY),
         color(200, 200, 0),
@@ -309,7 +279,7 @@ scene("main", () => {
     ]);
     const toolButtonText = toolButton.add([text(`Buy Tool ($${toolPrice})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
-    const replantButton = add([
+    replantButton = add([
         rect(buttonWidth, buttonHeight),
         pos(width() * 0.55, buttonY),
         color(0, 200, 0),
@@ -318,7 +288,7 @@ scene("main", () => {
     ]);
     const replantButtonText = replantButton.add([text(`Replant Tree ($${REPLANT_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
 
-    const reserveButton = add([
+    reserveButton = add([
         rect(buttonWidth, buttonHeight),
         pos(width() * 0.8, buttonY),
         color(0, 0, 200),
@@ -341,35 +311,6 @@ scene("main", () => {
         }
     }
 
-    // === CUT TREE FUNCTION ===
-    function cutTree() {
-        if (time() - lastCutTime >= cutDelay) {
-            if (trees > 0) {
-                trees--;
-                money += treePrice;
-                updateTreePrice();
-                lastCutTime = time();
-                updateCutButton();
-                updateUI();
-                removeTrees(1);
-                boycottProgress = Math.min(1, boycottProgress + 0.05);
-                if (boycottProgress >= 1 && !inBoycott) {
-                    triggerBoycott();
-                }
-            }
-        }
-    }
-
-    // === REPLANT TREE FUNCTION ===
-    function replantTree() {
-        if (money >= REPLANT_COST) {
-            money -= REPLANT_COST;
-            replantQueue.push(time() + REPLANT_TIME);
-            boycottProgress = Math.max(0, boycottProgress - 0.1);
-            updateUI();
-        }
-    }
-
     // === BUTTON CLICK EVENT ===
     function handleButtonClick(button, action) {
         button.onClick(() => {
@@ -389,7 +330,9 @@ scene("main", () => {
 
     // === GAME LOOP ===
     onUpdate(() => {
-        timeLeft -= dt();
+        if (cutDelay !== Infinity) {
+            timeLeft -= dt();
+        }
         if (timeLeft <= 0) {
             endGame();
         }
