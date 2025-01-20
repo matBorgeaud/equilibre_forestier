@@ -18,7 +18,7 @@ const REPLANT_COST = 200;
 const REPLANT_TIME = 60;
 const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
 const PROTECTED_TREES = 10; // Trees protected by reserve
-const BOYCOTT_THRESHOLD = 6;
+const BOYCOTT_THRESHOLD = 16;
 const BOYCOTT_PENALTY_TIME = 30;
 const BOYCOTT_PENALTY_MULTIPLIER = 8;
 
@@ -36,8 +36,12 @@ let treesCut = 0;
 
 // === SPRITE LOADING ===
 loadSprite("tree", "assets/image/tree_2.png");
+loadSprite("boycott", "assets/image/newspaper.png");
 
 let treeSprites = [];
+
+let boycottProgressBar;
+let boycottProgressBarBg;
 
 // === HELPER FUNCTIONS ===
 
@@ -99,6 +103,12 @@ function updateUI() {
     treesLabel.text = `Trees: ${trees}`;
     moneyLabel.text = `Money: $${money}`;
     timeLabel.text = `Time Left: ${Math.ceil(timeLeft)}s`;
+}
+
+// Update the boycott progress bar
+function updateBoycottProgressBar() {
+    const progress = Math.min(treesCut / BOYCOTT_THRESHOLD, 1);
+    boycottProgressBar.width = progress * boycottProgressBarBg.width;
 }
 
 // Create a nature reserve
@@ -171,22 +181,59 @@ function regenerateForest() {
     updateUI();
 }
 
+// === BUTTON HANDLING ===
+let buttons = [];
+
+function createButton(label, x, y, color, action) {
+    const buttonWidth = width() * 0.2;
+    const buttonHeight = height() * 0.06;
+    const button = add([
+        rect(buttonWidth, buttonHeight),
+        pos(x, y),
+        color,
+        area(),
+        "button",
+        { action, originalColor: color, active: true }
+    ]);
+    const buttonText = button.add([text(label, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
+    button.onClick(() => {
+        if (button.active) {
+            button.action();
+        }
+    });
+    buttons.push({ button, buttonText });
+    return { button, buttonText };
+}
+
+function setButtonsActive(active) {
+    buttons.forEach(({ button }) => {
+        button.active = active;
+        button.color = active ? button.originalColor : rgb(100, 100, 100);
+    });
+}
+
 // Trigger boycott
 function triggerBoycott() {
+    const popupWidth = width() * 0.4;
+    const popupHeight = height() * 0.5;
+    const imageSize = Math.min(popupWidth * 0.8, popupHeight * 0.8);
+    const buttonWidth = imageSize / 2 - 10; // Two buttons should fit under the image with some margin
+    const buttonHeight = height() * 0.08;
+
     const boycottPopup = add([
-        rect(width() * 0.8, height() * 0.4),
-        pos(width() * 0.1, height() * 0.3),
+        rect(popupWidth, popupHeight),
+        pos((width() - popupWidth) / 2, (height() - popupHeight) / 2),
         color(255, 255, 255),
         area(),
         "boycottPopup",
     ]);
-    const boycottText = boycottPopup.add([
-        text("You have cut too many trees! Choose a penalty:", { size: 24 }),
-        pos(20, 20),
+    const boycottImage = boycottPopup.add([
+        sprite("boycott", { width: imageSize, height: imageSize }),
+        pos((popupWidth - imageSize) / 2, 20),
     ]);
     const timePenaltyButton = boycottPopup.add([
-        rect(width() * 0.35, height() * 0.1),
-        pos(20, 80),
+        rect(buttonWidth, buttonHeight),
+        pos((popupWidth - imageSize) / 2 + 10, popupHeight - buttonHeight - 20),
         color(255, 0, 0),
         area(),
         "timePenaltyButton",
@@ -194,11 +241,11 @@ function triggerBoycott() {
     const timePenaltyText = timePenaltyButton.add([
         text("Lose 30 seconds", { size: 20 }),
         anchor("center"),
-        pos(width() * 0.35 / 2, height() * 0.1 / 2),
+        pos(buttonWidth / 2, buttonHeight / 2),
     ]);
     const moneyPenaltyButton = boycottPopup.add([
-        rect(width() * 0.35, height() * 0.1),
-        pos(width() * 0.4, 80),
+        rect(buttonWidth, buttonHeight),
+        pos((popupWidth + imageSize) / 2 - buttonWidth - 10, popupHeight - buttonHeight - 20),
         color(0, 255, 0),
         area(),
         "moneyPenaltyButton",
@@ -206,7 +253,7 @@ function triggerBoycott() {
     const moneyPenaltyText = moneyPenaltyButton.add([
         text(`Pay $${treePrice * BOYCOTT_PENALTY_MULTIPLIER}`, { size: 20 }),
         anchor("center"),
-        pos(width() * 0.35 / 2, height() * 0.1 / 2),
+        pos(buttonWidth / 2, buttonHeight / 2),
     ]);
 
     // Pause the game
@@ -215,10 +262,7 @@ function triggerBoycott() {
     const originalTimeLeft = timeLeft;
 
     // Disable other buttons
-    cutButton.area.enabled = false;
-    toolButton.area.enabled = false;
-    replantButton.area.enabled = false;
-    reserveButton.area.enabled = false;
+    setButtonsActive(false);
 
     timePenaltyButton.onClick(() => {
         timeLeft = originalTimeLeft - BOYCOTT_PENALTY_TIME;
@@ -226,10 +270,7 @@ function triggerBoycott() {
         cutDelay = originalCutDelay; // Resume the game
         treesCut = 0; // Reset the counter
         // Enable other buttons
-        cutButton.area.enabled = true;
-        toolButton.area.enabled = true;
-        replantButton.area.enabled = true;
-        reserveButton.area.enabled = true;
+        setButtonsActive(true);
     });
 
     moneyPenaltyButton.onClick(() => {
@@ -240,12 +281,76 @@ function triggerBoycott() {
             timeLeft = originalTimeLeft;
             treesCut = 0; // Reset the counter
             // Enable other buttons
-            cutButton.area.enabled = true;
-            toolButton.area.enabled = true;
-            replantButton.area.enabled = true;
-            reserveButton.area.enabled = true;
+            setButtonsActive(true);
         }
     });
+}
+
+// === FINAL SCENE ===
+function showFinalScene(win) {
+    scene("final", () => {
+        add([
+            text(win ? "You Win!" : "Game Over", { size: 48 }),
+            pos(width() / 2, height() / 4),
+            anchor("center"),
+        ]);
+
+        add([
+            text(`Trees Left: ${trees}`, { size: 24 }),
+            pos(width() / 2, height() / 2 - 40),
+            anchor("center"),
+        ]);
+
+        add([
+            text(`Money Earned: $${money}`, { size: 24 }),
+            pos(width() / 2, height() / 2),
+            anchor("center"),
+        ]);
+
+        add([
+            text(`Time Played: ${GAME_DURATION - Math.ceil(timeLeft)}s`, { size: 24 }),
+            pos(width() / 2, height() / 2 + 40),
+            anchor("center"),
+        ]);
+
+        const replayButton = add([
+            rect(200, 50),
+            pos(width() / 2 - 100, height() * 0.75),
+            color(0, 200, 0),
+            area(),
+            anchor("center"),
+            "replayButton",
+        ]);
+
+        const replayButtonText = replayButton.add([
+            text("Replay", { size: 24 }),
+            anchor("center"),
+            pos(100, 25),
+        ]);
+
+        replayButton.onClick(() => {
+            resetGame();
+            go("main");
+        });
+    });
+
+    go("final");
+}
+
+// Reset game stats
+function resetGame() {
+    trees = INITIAL_TREES;
+    money = INITIAL_MONEY;
+    treePrice = INITIAL_TREE_PRICE;
+    toolPrice = INITIAL_TOOL_PRICE;
+    timeLeft = GAME_DURATION;
+    cutDelay = 2;
+    lastCutTime = -cutDelay;
+    replantQueue = [];
+    protectedTrees = 0;
+    treesCut = 0;
+    treeSprites.forEach(tree => destroy(tree));
+    treeSprites = [];
 }
 
 // === MAIN GAME SCENE ===
@@ -255,47 +360,30 @@ scene("main", () => {
     moneyLabel = add([text("Money: $0", { size: 24 }), pos(20, 50)]);
     timeLabel = add([text("Time Left: 0s", { size: 24 }), pos(20, 80)]);
 
+    // Boycott progress bar
+    add([
+        text("Boycott Risk", { size: 20 }),
+        pos(20, 110),
+    ]);
+    boycottProgressBarBg = add([
+        rect(width() * 0.08, 20), // Shortened width
+        pos(20, 140),
+        color(200, 200, 200),
+    ]);
+    boycottProgressBar = add([
+        rect(0, 20),
+        pos(20, 140),
+        color(255, 0, 0),
+    ]);
+
     // Button dimensions
-    const buttonWidth = width() * 0.2;
-    const buttonHeight = height() * 0.06;
-    const buttonY = height() - buttonHeight - 20;
+    const buttonY = height() - height() * 0.06 - 20;
 
     // Buttons
-    cutButton = add([
-        rect(buttonWidth, buttonHeight),
-        pos(width() * 0.05, buttonY),
-        color(255, 0, 0),
-        area(),
-        "cutButton",
-    ]);
-    const cutButtonText = cutButton.add([text("Cut Tree", { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
-
-    toolButton = add([
-        rect(buttonWidth, buttonHeight),
-        pos(width() * 0.3, buttonY),
-        color(200, 200, 0),
-        area(),
-        "toolButton",
-    ]);
-    const toolButtonText = toolButton.add([text(`Buy Tool ($${toolPrice})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
-
-    replantButton = add([
-        rect(buttonWidth, buttonHeight),
-        pos(width() * 0.55, buttonY),
-        color(0, 200, 0),
-        area(),
-        "replantButton",
-    ]);
-    const replantButtonText = replantButton.add([text(`Replant Tree ($${REPLANT_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
-
-    reserveButton = add([
-        rect(buttonWidth, buttonHeight),
-        pos(width() * 0.8, buttonY),
-        color(0, 0, 200),
-        area(),
-        "reserveButton",
-    ]);
-    const reserveButtonText = reserveButton.add([text(`Create Reserve ($${NATURE_RESERVE_COST})`, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
+    const { button: cutButton, buttonText: cutButtonText } = createButton("Cut Tree", width() * 0.05, buttonY, rgb(255, 0, 0), cutTree);
+    const { button: toolButton, buttonText: toolButtonText } = createButton(`Buy Tool ($${toolPrice})`, width() * 0.3, buttonY, rgb(200, 200, 0), buyTool);
+    const { button: replantButton, buttonText: replantButtonText } = createButton(`Replant Tree ($${REPLANT_COST})`, width() * 0.55, buttonY, rgb(0, 200, 0), replantTree);
+    const { button: reserveButton, buttonText: reserveButtonText } = createButton(`Create Reserve ($${NATURE_RESERVE_COST})`, width() * 0.8, buttonY, rgb(0, 0, 200), createNatureReserve);
 
     // === UPDATE BUTTON COLOR AND TEXT BASED ON CUT DELAY ===
     function updateCutButton() {
@@ -311,20 +399,6 @@ scene("main", () => {
         }
     }
 
-    // === BUTTON CLICK EVENT ===
-    function handleButtonClick(button, action) {
-        button.onClick(() => {
-            button.color = rgb(100, 100, 100); // Change color on click
-            wait(0.1, () => button.color = rgb(255, 255, 255)); // Reset color after 0.1s
-            action();
-        });
-    }
-
-    handleButtonClick(cutButton, cutTree);
-    handleButtonClick(toolButton, buyTool);
-    handleButtonClick(replantButton, replantTree);
-    handleButtonClick(reserveButton, createNatureReserve);
-
     // Initialize button state
     updateCutButton();
 
@@ -333,12 +407,13 @@ scene("main", () => {
         if (cutDelay !== Infinity) {
             timeLeft -= dt();
         }
-        if (timeLeft <= 0) {
-            endGame();
+        if (timeLeft <= 0 || (money >= 20000 && trees >= 30)) {
+            showFinalScene(money >= 20000 && trees >= 30);
         }
         checkReplantedTrees();
         updateCutButton();
         updateUI();
+        updateBoycottProgressBar();
 
         // Update button states based on money
         toolButton.color = money >= toolPrice ? rgb(200, 200, 0) : rgb(100, 100, 100);
