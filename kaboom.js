@@ -18,7 +18,7 @@ const REPLANT_COST = 200;
 const REPLANT_TIME = 60;
 const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
 const PROTECTED_TREES = 10; // Trees protected by reserve
-const BOYCOTT_THRESHOLD = 16;
+const BOYCOTT_THRESHOLD = 5;
 const BOYCOTT_PENALTY_TIME = 30;
 const BOYCOTT_PENALTY_MULTIPLIER = 8;
 
@@ -37,6 +37,7 @@ let treesCut = 0;
 // === SPRITE LOADING ===
 loadSprite("tree", "assets/image/tree_2.png");
 loadSprite("boycott", "assets/image/newspaper.png");
+loadSprite("info", "assets/image/info.png");
 
 let treeSprites = [];
 
@@ -184,7 +185,7 @@ function regenerateForest() {
 // === BUTTON HANDLING ===
 let buttons = [];
 
-function createButton(label, x, y, color, action) {
+function createButton(label, x, y, color, action, infoText) {
     const buttonWidth = width() * 0.2;
     const buttonHeight = height() * 0.06;
     const button = add([
@@ -196,19 +197,65 @@ function createButton(label, x, y, color, action) {
         { action, originalColor: color, active: true }
     ]);
     const buttonText = button.add([text(label, { size: 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
+    const infoBubble = button.add([
+        sprite('info'), 
+        anchor("topright"),
+        pos(buttonWidth - 10, -10),
+        scale(4),
+        area({ scale: 1.5 }),
+        "infoBubble",
+        { infoText }
+    ]);
+    infoBubble.onClick(() => {
+        showInfoPopup(infoText);
+    });
     button.onClick(() => {
         if (button.active) {
             button.action();
         }
     });
-    buttons.push({ button, buttonText });
-    return { button, buttonText };
+    buttons.push({ button, buttonText, infoBubble });
+    return { button, buttonText, infoBubble };
 }
 
+// Enable or disable all buttons
 function setButtonsActive(active) {
     buttons.forEach(({ button }) => {
         button.active = active;
         button.color = active ? button.originalColor : rgb(100, 100, 100);
+    });
+}
+
+function showInfoPopup(infoText) {
+    const popupWidth = width() * 0.4;
+    const popupHeight = height() * 0.3;
+
+    const infoPopup = add([
+        rect(popupWidth, popupHeight),
+        pos((width() - popupWidth) / 2, (height() - popupHeight) / 2),
+        color(255, 255, 255),
+        area(),
+        "infoPopup",
+    ]);
+    const infoTextLabel = infoPopup.add([
+        text(infoText, { size: 20 }),
+        pos(20, 20),
+        color(0, 0, 0),
+    ]);
+    const closeButton = infoPopup.add([
+        rect(100, 40),
+        pos(popupWidth - 120, popupHeight - 60),
+        color(200, 0, 0),
+        area(),
+        "closeButton",
+    ]);
+    const closeButtonText = closeButton.add([
+        text("Close", { size: 20 }),
+        anchor("center"),
+        pos(50, 20),
+    ]);
+    closeButton.onClick(() => {
+        destroy(infoPopup);
     });
 }
 
@@ -380,10 +427,10 @@ scene("main", () => {
     const buttonY = height() - height() * 0.06 - 20;
 
     // Buttons
-    const { button: cutButton, buttonText: cutButtonText } = createButton("Cut Tree", width() * 0.05, buttonY, rgb(255, 0, 0), cutTree);
-    const { button: toolButton, buttonText: toolButtonText } = createButton(`Buy Tool ($${toolPrice})`, width() * 0.3, buttonY, rgb(200, 200, 0), buyTool);
-    const { button: replantButton, buttonText: replantButtonText } = createButton(`Replant Tree ($${REPLANT_COST})`, width() * 0.55, buttonY, rgb(0, 200, 0), replantTree);
-    const { button: reserveButton, buttonText: reserveButtonText } = createButton(`Create Reserve ($${NATURE_RESERVE_COST})`, width() * 0.8, buttonY, rgb(0, 0, 200), createNatureReserve);
+    const { button: cutButton, buttonText: cutButtonText } = createButton("Cut Tree", width() * 0.05, buttonY, rgb(255, 0, 0), cutTree, "Cut down a tree to earn money.");
+    const { button: toolButton, buttonText: toolButtonText } = createButton(`Buy Tool ($${toolPrice})`, width() * 0.3, buttonY, rgb(200, 200, 0), buyTool, "Buy a tool to reduce cutting delay.");
+    const { button: replantButton, buttonText: replantButtonText } = createButton(`Replant Tree ($${REPLANT_COST})`, width() * 0.55, buttonY, rgb(0, 200, 0), replantTree, "Replant a tree to restore the forest.");
+    const { button: reserveButton, buttonText: reserveButtonText } = createButton(`Create Reserve ($${NATURE_RESERVE_COST})`, width() * 0.8, buttonY, rgb(0, 0, 200), createNatureReserve, "Create a nature reserve to protect trees.");
 
     // === UPDATE BUTTON COLOR AND TEXT BASED ON CUT DELAY ===
     function updateCutButton() {
