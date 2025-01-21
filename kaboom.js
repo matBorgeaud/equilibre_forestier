@@ -29,8 +29,8 @@ const GAME_DURATION = 300; // 5 minutes in seconds
 const INITIAL_TREES = 100;
 const INITIAL_MONEY = 0;
 const INITIAL_TREE_PRICE = 50;
-const TREE_PRICE_MULTIPLIER = 1.1;
-const REGEN_RATE = 0.01;
+const TREE_PRICE_MULTIPLIER = 1.05;
+const REGEN_RATE = 0.08;
 const INITIAL_TOOL_PRICE = 100;
 const TOOL_PRICE_INCREASE = 1.15;
 const TOOL_CUT_DELAY_REDUCTION = 0.1;
@@ -38,9 +38,9 @@ const REPLANT_COST = 200;
 const REPLANT_TIME = 60;
 const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
 const PROTECTED_TREES = 10; // Trees protected by reserve
-const BOYCOTT_THRESHOLD = 5;
+const BOYCOTT_THRESHOLD = 12;
 const BOYCOTT_PENALTY_TIME = 30;
-const BOYCOTT_PENALTY_MULTIPLIER = 8;
+const BOYCOTT_PENALTY_MULTIPLIER = 4;
 
 // === GAME STATE ===
 let trees = INITIAL_TREES;
@@ -77,7 +77,7 @@ function addNewTrees(count) {
     const screenWidth = width;
     const screenHeight = height;
     const marginX = screenWidth * 0.1; // 10% margin on sides
-    const marginTop = screenHeight * 0.1; // 10% margin on top
+    const marginTop = screenHeight * 0.17; // 10% margin on top
     const marginBottom = screenHeight * 0.2; // 20% margin on bottom
     const areaWidth = screenWidth - 2 * marginX;
     const areaHeight = screenHeight - marginTop - marginBottom;
@@ -530,5 +530,45 @@ scene("main", () => {
     updateUI();
 });
 
-// Start the game
-go("main");
+// === INSTRUCTION SCENE ===
+scene("instructions", () => {
+    // Add background image
+    const scaleRatio = Math.max(width / 400, height / 225);
+    add([
+        sprite("background"),
+        pos(width / 2, height / 2),
+        anchor("center"),
+        scale(scaleRatio),
+    ]);
+
+    // Instruction text
+    add([
+        text("Bienvenue dans Équilibre Forestier !\n\nObjectifs :\n1. À la fin des 5 minutes, vous devez :\n- Avoir au moins 30 arbres.\n- Posséder 20,000 dollars ou plus.\n\n2. Vous perdez si :\n- Le nombre d'arbres atteint 0 avant la fin du temps.\n\nAttention :\n- Couper des arbres augmente le risque de boycott.\n- Replanter des arbres réduit ce risque et aide à atteindre vos objectifs.\n\nBonne chance !", { size: 38, width: width * 0.8, align: "center" }),
+        pos(width / 2, height / 4),
+        anchor("center"),
+        color(0, 0, 0), // Set text color to black
+    ]);
+
+    // Play button
+    const playButton = add([
+        rect(200, 50),
+        pos(width / 2, height * 0.75),
+        anchor("center"),
+        color(0, 200, 0),
+        area(),
+        "playButton",
+    ]);
+
+    const playButtonText = playButton.add([
+        text("Play", { size: 38 }),
+        anchor("center"),
+        pos(0, 0),
+    ]);
+
+    playButton.onClick(() => {
+        go("main");
+    });
+});
+
+// Start the game with the instruction scene
+go("instructions");
