@@ -295,9 +295,6 @@ function showInfoPopup(infoText) {
 }
 
 function triggerBoycott() {
-    // Pause the game
-    togglePause("boycott");
-
     const popupWidth = width * 0.4;
     const popupHeight = height * 0.5;
     const imageSize = Math.min(popupWidth * 0.8, popupHeight * 0.8);
@@ -342,23 +339,35 @@ function triggerBoycott() {
         pos(buttonWidth / 2, buttonHeight / 2),
     ]);
 
+    // Pause the game
+    const originalCutDelay = cutDelay;
+    const originalLastCutTime = lastCutTime;
+    cutDelay = Infinity;
+    const originalTimeLeft = timeLeft;
+
+    // Disable other buttons
+    setButtonsActive(false);
+
     timePenaltyButton.onClick(() => {
-        timeLeft = Math.max(0, timeLeft - BOYCOTT_PENALTY_TIME); // Deduct 30 seconds, ensure timeLeft doesn't go negative
+        timeLeft = originalTimeLeft - BOYCOTT_PENALTY_TIME;
         destroy(boycottPopup);
-        if (pauseReason === "boycott") {
-            togglePause(); // Resume the game only if paused by boycott
-        }
+        cutDelay = originalCutDelay; // Resume the game
+        lastCutTime = originalLastCutTime; // Restore last cut time
         treesCut = 0; // Reset the counter
+        // Enable other buttons
+        setButtonsActive(true);
     });
 
     moneyPenaltyButton.onClick(() => {
         if (canPay) {
             money -= treePrice * BOYCOTT_PENALTY_MULTIPLIER;
             destroy(boycottPopup);
-            if (pauseReason === "boycott") {
-                togglePause(); // Resume the game only if paused by boycott
-            }
+            cutDelay = originalCutDelay; // Resume the game
+            lastCutTime = originalLastCutTime; // Restore last cut time
+            timeLeft = originalTimeLeft;
             treesCut = 0; // Reset the counter
+            // Enable other buttons
+            setButtonsActive(true);
         }
     });
 }
