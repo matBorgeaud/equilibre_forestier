@@ -23,3 +23,7 @@ Abattez des arbres pour maximiser vos gains, mais attention : la régénération
 ## 🎓 **À propos du projet**  
 Ce jeu a été réalisé dans le cadre du cours **Jeu Vidéo 2D** dispensé par **Isaac Pante** au sein de la **Faculté des Lettres** de l’UNIL (Université de Lausanne).  
 
+https://pixabay.com/sound-effects/wood-crack-1-105890/
+https://pixabay.com/sound-effects/coin-clatter-6-87110/
+https://www.pinterest.com/pin/380272762264915496/
+

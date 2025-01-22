@@ -13,6 +13,14 @@ function getAspectRatioDimensions() {
     return { width, height };
 }
 
+// Function to calculate dynamic text size
+function getTextSize(baseSize) {
+    const baseWidth = 2337;
+    const baseHeight = 1315;
+    const scaleFactor = Math.min(width / baseWidth, height / baseHeight);
+    return baseSize * scaleFactor;
+}
+
 const { width, height } = getAspectRatioDimensions();
 
 kaboom({
@@ -38,7 +46,7 @@ const REPLANT_COST = 200;
 const REPLANT_TIME = 60;
 const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
 const PROTECTED_TREES = 10; // Trees protected by reserve
-const BOYCOTT_THRESHOLD = 3;
+const BOYCOTT_THRESHOLD = 12;
 const BOYCOTT_PENALTY_TIME = 30;
 const BOYCOTT_PENALTY_MULTIPLIER = 4;
 
@@ -61,6 +69,9 @@ loadSprite("info", "assets/image/info.png");
 loadSprite("background", "assets/image/background.png");
 loadSprite("pause", "assets/image/pause.png");
 loadSprite("play", "assets/image/play.png");
+
+loadSound("cut", "assets/sons/wood_crack.mp3");
+loadSound("buy", "assets/sons/buy.mp3");
 
 let treeSprites = [];
 
@@ -124,10 +135,10 @@ function removeTrees(count) {
 // Update the entire UI
 function updateUI() {
     // Mise à jour des étiquettes
-    treesLabel.text = `Trees: ${trees - protectedTrees}`;
-    protectedTreesLabel.text = `Protected Trees: ${protectedTrees}`;
-    moneyLabel.text = `Money: $${money}`;
-    timeLabel.text = `Time Left: ${Math.ceil(timeLeft)}s`;
+    treesLabel.text = `Arbres : ${trees - protectedTrees}`;
+    protectedTreesLabel.text = `Arbres protégés : ${protectedTrees}`;
+    moneyLabel.text = `Argent : $${money}`;
+    timeLabel.text = `Temps restant : ${Math.ceil(timeLeft)}s`;
 }
 
 // Update the boycott progress bar
@@ -156,6 +167,7 @@ function cutTree() {
         money += treePrice;
         updateTreePrice();
         lastCutTime = time();
+        play("cut"); // Play cut sound
         updateUI();
         if (treesCut >= BOYCOTT_THRESHOLD) {
             triggerBoycott();
@@ -170,6 +182,7 @@ function replantTree() {
         money -= REPLANT_COST;
         replantQueue.push(time() + REPLANT_TIME);
         treesCut = Math.max(0, treesCut - 0.5);
+        play("buy"); // Play buy sound
         updateUI();
     }
 }
@@ -179,6 +192,7 @@ function buyTool() {
         money -= toolPrice;
         cutDelay = Math.max(0.5, cutDelay - TOOL_CUT_DELAY_REDUCTION);
         toolPrice = Math.floor(toolPrice * TOOL_PRICE_INCREASE);
+        play("buy"); // Play buy sound
         updateUI();
     }
 }
@@ -221,7 +235,7 @@ function createButton(label, x, y, color, action, infoText) {
         "button",
         { action, originalColor: color, active: true }
     ]);
-    const buttonText = button.add([text(label, { size: 20, width: buttonWidth - 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
+    const buttonText = button.add([text(label, { size: getTextSize(20), width: buttonWidth - 20 }), anchor("center"), pos(buttonWidth / 2, buttonHeight / 2)]);
     const infoBubble = button.add([
         sprite('info'), 
         anchor("topright"),
@@ -266,7 +280,7 @@ function showInfoPopup(infoText) {
         "infoPopup",
     ]);
     const infoTextLabel = infoPopup.add([
-        text(infoText, { size: 20, width: popupWidth - 40 }),
+        text(infoText, { size: getTextSize(30), width: popupWidth - 40 }),
         pos(20, 20),
         color(0, 0, 0),
     ]);
@@ -278,7 +292,7 @@ function showInfoPopup(infoText) {
         "closeButton",
     ]);
     const closeButtonText = closeButton.add([
-        text("Close", { size: 20 }),
+        text("Fermer", { size: getTextSize(20) }),
         anchor("center"),
         pos(50, 20),
     ]);
@@ -320,7 +334,7 @@ function triggerBoycott() {
         "timePenaltyButton",
     ]);
     const timePenaltyText = timePenaltyButton.add([
-        text("Lose 30 seconds", { size: 20 }),
+        text("Perdre 30 secondes", { size: getTextSize(20) }),
         anchor("center"),
         pos(buttonWidth / 2, buttonHeight / 2),
     ]);
@@ -334,7 +348,7 @@ function triggerBoycott() {
         "moneyPenaltyButton",
     ]);
     const moneyPenaltyText = moneyPenaltyButton.add([
-        text(`Pay $${treePrice * BOYCOTT_PENALTY_MULTIPLIER}`, { size: 20 }),
+        text(`Payer $${treePrice * BOYCOTT_PENALTY_MULTIPLIER}`, { size: getTextSize(20) }),
         anchor("center"),
         pos(buttonWidth / 2, buttonHeight / 2),
     ]);
@@ -376,42 +390,42 @@ function triggerBoycott() {
 function showFinalScene(win) {
     scene("final", () => {
         add([
-            text(win ? "You Win!" : "Game Over", { size: 48 }),
+            text(win ? "Gagné !" : "Perdu", { size: getTextSize(48) }),
             pos(width / 2, height / 4),
             anchor("center"),
         ]);
 
         add([
-            text(`Trees Left: ${trees}`, { size: 24 }),
+            text(`Arbres restants : ${trees}`, { size: getTextSize(24) }),
             pos(width / 2, height / 2 - 40),
             anchor("center"),
         ]);
 
         add([
-            text(`Money Earned: $${money}`, { size: 24 }),
+            text(`Argent gagné : $${money}`, { size: getTextSize(24) }),
             pos(width / 2, height / 2),
             anchor("center"),
         ]);
 
         add([
-            text(`Time Played: ${GAME_DURATION - Math.ceil(timeLeft)}s`, { size: 24 }),
+            text(`Temps joué : ${GAME_DURATION - Math.ceil(timeLeft)}s`, { size: getTextSize(24) }),
             pos(width / 2, height / 2 + 40),
             anchor("center"),
         ]);
 
         const replayButton = add([
-            rect(200, 50),
+            rect(400, 100),
             pos(width / 2, height * 0.75),
             anchor("center"),
-            color(0, 200, 0),
+            color(0, 0, 0),
             area(),
             "replayButton",
         ]);
 
         const replayButtonText = replayButton.add([
-            text("Replay", { size: 24 }),
+            text("Rejouer", { size: getTextSize(24) }),
             anchor("center"),
-            pos(100, 25),
+            //pos(200, 50), // Align text with the button
         ]);
 
         replayButton.onClick(() => {
@@ -477,7 +491,7 @@ function createPauseButton(x, y, size, spriteName, onClickAction) {
     const button = add([
         sprite(spriteName, { width: size, height: size }),
         pos(x, y),
-        anchor("center"),
+        anchor("top"),
         area(),
         "pauseButton",
     ]);
@@ -506,24 +520,24 @@ scene("main", () => {
     ]);
 
     // UI Elements
-    treesLabel = add([text("Trees: 0", { size: 24 }), pos(20, 20)]);
-    protectedTreesLabel = add([text("Protected Trees: 0", { size: 24 }), pos(20, 50)]);
-    moneyLabel = add([text("Money: $0", { size: 24 }), pos(20, 80)]);
-    timeLabel = add([text("Time Left: 0s", { size: 24 }), pos(20, 110)]);
+    treesLabel = add([text("Arbres : 0", { size: getTextSize(28) }), pos(20, 20)]);
+    protectedTreesLabel = add([text("Arbres protégés : 0", { size: getTextSize(28) }), pos(20, 60)]);
+    moneyLabel = add([text("Argent : $0", { size: getTextSize(28) }), pos(20, 100)]);
+    timeLabel = add([text("Temps restant : 0s", { size: getTextSize(28) }), pos(20, 140)]);
 
     // Boycott progress bar
     add([
-        text("Boycott Risk", { size: 20 }),
-        pos(20, 140),
+        text("Risque de boycott", { size: getTextSize(28) }),
+        pos(20, 180),
     ]);
     boycottProgressBarBg = add([
-        rect(width * 0.08, 20), // Shortened width
-        pos(20, 170),
+        rect(width * 0.12, 20), // Shortened width
+        pos(20, 220),
         color(200, 200, 200),
     ]);
     boycottProgressBar = add([
         rect(0, 20),
-        pos(20, 170),
+        pos(20, 220),
         color(255, 0, 0),
     ]);
 
@@ -535,10 +549,10 @@ scene("main", () => {
     const buttonY = height - height * 0.06 - 20;
 
     // Buttons
-    const { button: cutButton, buttonText: cutButtonText } = createButton("Cut Tree", width * 0.05, buttonY, rgb(255, 0, 0), cutTree, "Coupez un arbre pour gagner de l'argent. Plus les arbres se font rares plus les arbres rapportent de l'argent mais attention le taux de génération est aussi réduit.");
-    const { button: toolButton, buttonText: toolButtonText } = createButton(`Buy Tool ($${toolPrice})`, width * 0.3, buttonY, rgb(200, 200, 0), buyTool, "Achetez des haches pour réduire le délais d'abattage. Attention le prix augmente à chaque achat.");
-    const { button: replantButton, buttonText: replantButtonText } = createButton(`Replant Tree ($${REPLANT_COST})`, width * 0.55, buttonY, rgb(0, 200, 0), replantTree, "Replantez un arbre en échange d'argent. Attention le temps de croissance est d'une minute, pensez à anticiper vos besoins futurs.");
-    const { button: reserveButton, buttonText: reserveButtonText } = createButton(`Create Reserve ($${NATURE_RESERVE_COST})`, width * 0.8, buttonY, rgb(0, 0, 200), createNatureReserve, "Créez une réserve naturelle pour protéger 10 arbres par réserve. Attention les arbre protégés ne peuvent plus être abattus, mais en échange le risque de boycott est diminué.");
+    const { button: cutButton, buttonText: cutButtonText } = createButton("Couper un arbre", width * 0.05, buttonY, rgb(255, 0, 0), cutTree, "Coupez un arbre pour gagner de l'argent. Plus les arbres se font rares plus les arbres rapportent de l'argent mais attention le taux de génération est aussi réduit.");
+    const { button: toolButton, buttonText: toolButtonText } = createButton(`Acheter un outil ($${toolPrice})`, width * 0.3, buttonY, rgb(200, 200, 0), buyTool, "Achetez des haches pour réduire le délais d'abattage. Attention le prix augmente à chaque achat.");
+    const { button: replantButton, buttonText: replantButtonText } = createButton(`Replanter un arbre ($${REPLANT_COST})`, width * 0.55, buttonY, rgb(0, 200, 0), replantTree, "Replantez un arbre en échange d'argent. Attention le temps de croissance est d'une minute, pensez à anticiper vos besoins futurs.");
+    const { button: reserveButton, buttonText: reserveButtonText } = createButton(`Créer une réserve ($${NATURE_RESERVE_COST})`, width * 0.8, buttonY, rgb(0, 0, 200), createNatureReserve, "Créez une réserve naturelle pour protéger 10 arbres par réserve. Attention les arbre protégés ne peuvent plus être abattus, mais en échange le risque de boycott est diminué.");
 
     // === UPDATE BUTTON COLOR AND TEXT BASED ON CUT DELAY ===
     function updateCutButton() {
@@ -548,9 +562,9 @@ scene("main", () => {
         const green = 255 * progress;
         cutButton.color = rgb(red, green, 0);
         if (progress < 1) {
-            cutButtonText.text = `Cutting... ${Math.floor(progress * 100)}%`;
+            cutButtonText.text = `abattage... ${Math.floor(progress * 100)}%`;
         } else {
-            cutButtonText.text = "Cut Tree";
+            cutButtonText.text = "Couper un arbre";
         }
     }
 
@@ -577,9 +591,9 @@ scene("main", () => {
             reserveButton.color = money >= NATURE_RESERVE_COST ? rgb(0, 0, 200) : rgb(100, 100, 100);
 
             // Update button texts with prices
-            toolButtonText.text = `Buy Tool ($${toolPrice})`;
-            replantButtonText.text = `Replant Tree ($${REPLANT_COST})`;
-            reserveButtonText.text = `Create Reserve ($${NATURE_RESERVE_COST})`;
+            toolButtonText.text = `Acheter un outil ($${toolPrice})`;
+            replantButtonText.text = `Replanter un arbre ($${REPLANT_COST})`;
+            reserveButtonText.text = `Créer une réserve ($${NATURE_RESERVE_COST})`;
         }
     });
 
@@ -604,16 +618,34 @@ scene("instructions", () => {
     ]);
 
     // Instruction text
+    const instructionText = `
+Bienvenue dans Équilibre Forestier !
+
+Objectifs :
+1. À la fin des 5 minutes, vous devez :
+   - Avoir au moins 30 arbres.
+   - Posséder 20,000 dollars ou plus.
+
+2. Vous perdez si :
+   - Le nombre d'arbres atteint 0 avant la fin du temps.
+
+Attention :
+- Couper des arbres augmente le risque de boycott.
+- Replanter des arbres réduit ce risque.
+
+Bonne chance !
+`;
+
     add([
-        text("Bienvenue dans Équilibre Forestier !\n\nObjectifs :\n1. À la fin des 5 minutes, vous devez :\n- Avoir au moins 30 arbres.\n- Posséder 20,000 dollars ou plus.\n\n2. Vous perdez si :\n- Le nombre d'arbres atteint 0 avant la fin du temps.\n\nAttention :\n- Couper des arbres augmente le risque de boycott.\n- Replanter des arbres réduit ce risque et aide à atteindre vos objectifs.\n\nBonne chance !", { size: 38, width: width * 0.8, align: "center" }),
-        pos(width / 2, height / 4),
+        text(instructionText, { size: getTextSize(38), width: width * 0.8, align: "left" }),
+        pos(width / 1.5, height / 2.5),
         anchor("center"),
         color(0, 0, 0), // Set text color to black
     ]);
 
     // Play button
     const playButton = add([
-        rect(200, 50),
+        rect(300, 70),
         pos(width / 2, height * 0.75),
         anchor("center"),
         color(0, 200, 0),
@@ -622,9 +654,8 @@ scene("instructions", () => {
     ]);
 
     const playButtonText = playButton.add([
-        text("Play", { size: 38 }),
+        text("Jouer", { size: getTextSize(44) }),
         anchor("center"),
-        pos(0, 0),
     ]);
 
     playButton.onClick(() => {
