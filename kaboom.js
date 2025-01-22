@@ -38,7 +38,7 @@ const REPLANT_COST = 200;
 const REPLANT_TIME = 60;
 const NATURE_RESERVE_COST = 1000; // Cost to create a reserve
 const PROTECTED_TREES = 10; // Trees protected by reserve
-const BOYCOTT_THRESHOLD = 12;
+const BOYCOTT_THRESHOLD = 3;
 const BOYCOTT_PENALTY_TIME = 30;
 const BOYCOTT_PENALTY_MULTIPLIER = 4;
 
@@ -59,6 +59,8 @@ loadSprite("tree", "assets/image/tree_2.png");
 loadSprite("boycott", "assets/image/newspaper.png");
 loadSprite("info", "assets/image/info.png");
 loadSprite("background", "assets/image/background.png");
+loadSprite("pause", "assets/image/pause.png");
+loadSprite("play", "assets/image/play.png");
 
 let treeSprites = [];
 
@@ -231,6 +233,9 @@ function createButton(label, x, y, color, action, infoText) {
     ]);
     infoBubble.onClick(() => {
         showInfoPopup(infoText);
+        if (!isPaused) {
+            togglePause("infoBubble"); // Ensure the game is paused when infoBubble is clicked
+        }
     });
     button.onClick(() => {
         if (button.active) {
@@ -279,23 +284,20 @@ function showInfoPopup(infoText) {
     ]);
 
     // Pause the game
-    const originalCutDelay = cutDelay;
-    const originalLastCutTime = lastCutTime;
-    cutDelay = Infinity;
-
-    // Disable other buttons
-    setButtonsActive(false);
+    togglePause("infoBubble");
 
     closeButton.onClick(() => {
         destroy(infoPopup);
-        cutDelay = originalCutDelay; // Resume the game
-        lastCutTime = originalLastCutTime; // Restore last cut time
-        // Enable other buttons
-        setButtonsActive(true);
+        if (pauseReason === "infoBubble") {
+            togglePause(); // Resume the game only if paused by infoBubble
+        }
     });
 }
 
 function triggerBoycott() {
+    // Pause the game
+    togglePause("boycott");
+
     const popupWidth = width * 0.4;
     const popupHeight = height * 0.5;
     const imageSize = Math.min(popupWidth * 0.8, popupHeight * 0.8);
@@ -325,10 +327,12 @@ function triggerBoycott() {
         anchor("center"),
         pos(buttonWidth / 2, buttonHeight / 2),
     ]);
+
+    const canPay = money >= treePrice * BOYCOTT_PENALTY_MULTIPLIER;
     const moneyPenaltyButton = boycottPopup.add([
         rect(buttonWidth, buttonHeight),
         pos((popupWidth + imageSize) / 2 - buttonWidth - 10, popupHeight - buttonHeight - 20),
-        color(0, 255, 0),
+        color(canPay ? rgb(0, 255, 0) : rgb(100, 100, 100)),
         area(),
         "moneyPenaltyButton",
     ]);
@@ -338,35 +342,23 @@ function triggerBoycott() {
         pos(buttonWidth / 2, buttonHeight / 2),
     ]);
 
-    // Pause the game
-    const originalCutDelay = cutDelay;
-    const originalLastCutTime = lastCutTime;
-    cutDelay = Infinity;
-    const originalTimeLeft = timeLeft;
-
-    // Disable other buttons
-    setButtonsActive(false);
-
     timePenaltyButton.onClick(() => {
-        timeLeft = originalTimeLeft - BOYCOTT_PENALTY_TIME;
+        timeLeft = Math.max(0, timeLeft - BOYCOTT_PENALTY_TIME); // Deduct 30 seconds, ensure timeLeft doesn't go negative
         destroy(boycottPopup);
-        cutDelay = originalCutDelay; // Resume the game
-        lastCutTime = originalLastCutTime; // Restore last cut time
+        if (pauseReason === "boycott") {
+            togglePause(); // Resume the game only if paused by boycott
+        }
         treesCut = 0; // Reset the counter
-        // Enable other buttons
-        setButtonsActive(true);
     });
 
     moneyPenaltyButton.onClick(() => {
-        if (money >= treePrice * BOYCOTT_PENALTY_MULTIPLIER) {
+        if (canPay) {
             money -= treePrice * BOYCOTT_PENALTY_MULTIPLIER;
             destroy(boycottPopup);
-            cutDelay = originalCutDelay; // Resume the game
-            lastCutTime = originalLastCutTime; // Restore last cut time
-            timeLeft = originalTimeLeft;
+            if (pauseReason === "boycott") {
+                togglePause(); // Resume the game only if paused by boycott
+            }
             treesCut = 0; // Reset the counter
-            // Enable other buttons
-            setButtonsActive(true);
         }
     });
 }
@@ -400,10 +392,10 @@ function showFinalScene(win) {
 
         const replayButton = add([
             rect(200, 50),
-            pos(width / 2 - 100, height * 0.75),
+            pos(width / 2, height * 0.75),
+            anchor("center"),
             color(0, 200, 0),
             area(),
-            anchor("center"),
             "replayButton",
         ]);
 
@@ -436,6 +428,61 @@ function resetGame() {
     treesCut = 0;
     treeSprites.forEach(tree => destroy(tree));
     treeSprites = [];
+}
+
+// === PAUSE FUNCTIONALITY ===
+let isPaused = false;
+let originalCutDelay = cutDelay;
+let originalLastCutTime = lastCutTime;
+let playButton;
+let pauseReason = null; // null signifie que le jeu n'est pas en pause.
+
+function togglePause(reason = null) {
+    if (!isPaused) {
+        // Mise en pause
+        isPaused = true;
+        pauseReason = reason;
+        originalCutDelay = cutDelay;
+        originalLastCutTime = lastCutTime;
+        cutDelay = Infinity;
+        setButtonsActive(false);
+
+        // Afficher le bouton "Play" uniquement si la raison est le bouton "Pause"
+        if (reason === "pauseButton") {
+            showPlayButton();
+        }
+    } else {
+        // Reprendre le jeu
+        isPaused = false;
+        pauseReason = null;
+        cutDelay = originalCutDelay;
+        lastCutTime = originalLastCutTime;
+        setButtonsActive(true);
+
+        if (playButton) destroy(playButton); // Supprimer le bouton "Play"
+    }
+}
+
+
+function createPauseButton(x, y, size, spriteName, onClickAction) {
+    const button = add([
+        sprite(spriteName, { width: size, height: size }),
+        pos(x, y),
+        anchor("center"),
+        area(),
+        "pauseButton",
+    ]);
+
+    button.onClick(() => {
+        onClickAction("pauseButton");
+    });
+
+    return button;
+}
+
+function showPlayButton() {
+    const playButtonSize = height / 4;
+    playButton = createPauseButton(width / 2, height / 2, playButtonSize, "play", togglePause);
 }
 
 // === MAIN GAME SCENE ===
@@ -471,6 +518,10 @@ scene("main", () => {
         color(255, 0, 0),
     ]);
 
+    // Pause button
+    const pauseButtonSize = height / 12;
+    createPauseButton(width - pauseButtonSize - 20, 20, pauseButtonSize, "pause", togglePause);
+
     // Button dimensions
     const buttonY = height - height * 0.06 - 20;
 
@@ -499,26 +550,28 @@ scene("main", () => {
 
     // === GAME LOOP ===
     onUpdate(() => {
-        if (cutDelay !== Infinity) {
-            timeLeft -= dt();
-        }
-        if (timeLeft <= 0 || (money >= 20000 && trees >= 30)) {
-            showFinalScene(money >= 20000 && trees >= 30);
-        }
-        checkReplantedTrees();
-        updateCutButton();
-        updateUI();
-        updateBoycottProgressBar();
+        if (!isPaused) {
+            if (cutDelay !== Infinity) {
+                timeLeft -= dt();
+            }
+            if (timeLeft <= 0 || (money >= 20000 && trees >= 30)) {
+                showFinalScene(money >= 20000 && trees >= 30);
+            }
+            checkReplantedTrees();
+            updateCutButton();
+            updateUI();
+            updateBoycottProgressBar();
 
-        // Update button states based on money
-        toolButton.color = money >= toolPrice ? rgb(200, 200, 0) : rgb(100, 100, 100);
-        replantButton.color = money >= REPLANT_COST ? rgb(0, 200, 0) : rgb(100, 100, 100);
-        reserveButton.color = money >= NATURE_RESERVE_COST ? rgb(0, 0, 200) : rgb(100, 100, 100);
+            // Update button states based on money
+            toolButton.color = money >= toolPrice ? rgb(200, 200, 0) : rgb(100, 100, 100);
+            replantButton.color = money >= REPLANT_COST ? rgb(0, 200, 0) : rgb(100, 100, 100);
+            reserveButton.color = money >= NATURE_RESERVE_COST ? rgb(0, 0, 200) : rgb(100, 100, 100);
 
-        // Update button texts with prices
-        toolButtonText.text = `Buy Tool ($${toolPrice})`;
-        replantButtonText.text = `Replant Tree ($${REPLANT_COST})`;
-        reserveButtonText.text = `Create Reserve ($${NATURE_RESERVE_COST})`;
+            // Update button texts with prices
+            toolButtonText.text = `Buy Tool ($${toolPrice})`;
+            replantButtonText.text = `Replant Tree ($${REPLANT_COST})`;
+            reserveButtonText.text = `Create Reserve ($${NATURE_RESERVE_COST})`;
+        }
     });
 
     // Forest regeneration
