@@ -1,5 +1,5 @@
 # 🌳 Équilibre Forestier 🌳  
-Bienvenue dans **Équilibre Forestier**, un jeu où la gestion et la stratégie se mêlent pour préserver la beauté de la nature tout en atteignant vos objectifs économiques ! 🎮💰 Prenez soin de votre forêt, évitez les boycotts et devenez le héros des écosystèmes ! 🌱
+Bienvenue dans **Équilibre Forestier**, un jeu où la gestion et la stratégie se mêlent pour préserver la beauté de la nature tout en atteignant vos objectifs économiques ! 🎮💰 Prenez soin de votre forêt, évitez les boycotts et réussissez à concilier intérêts financiers et écologiques  ! 🌱
 
 ---
 
@@ -18,7 +18,7 @@ Pas d’installation requise, lancez-vous et amusez-vous ! 🎉
 ## ⚙️ Fonctionnalités  
 - **Coupez et replantez des arbres 🌲** pour gérer votre forêt.  
 - **Survivez aux boycotts ⚡**, qui pourraient ruiner vos plans.  
-- **Atteignez vos objectifs 🎯** : 30 arbres et 20,000 dollars en 5 minutes.  
+- **Atteignez vos objectifs 🎯** : 30 arbres restants et 20,000 dollars en 5 minutes.  
 
 ---
 
@@ -35,15 +35,11 @@ Les visuels et sons du jeu proviennent de ces incroyables créateurs :
   - [Coin Clatter](https://pixabay.com/sound-effects/coin-clatter-6-87110/) par FenrirFangs  
 - **Arrière-plan** 🎨 :  
   - [Pinterest](https://www.pinterest.com/pin/380272762264915496/)  
-- **Forêt en pixel art** 🖌️ :  
+- **Arbres** 🖌️ :  
   - [Pixel Art Forest Pack](https://dubpixel.itch.io/pixel-art-forest-pack) par dubpixel  
 - **Musique** 🎵 :  
   - [The Beat of Nature](https://pixabay.com/music/solo-guitar-the-beat-of-nature-122841/) par folk_acoustic  
 
----
-
-## 📝 Informations légales  
-Les assets sont utilisés conformément aux licences disponibles sur leurs plateformes respectives. Un grand merci à tous ces talentueux artistes ! 🙌  
 
 ---
 
@@ -52,4 +48,4 @@ Ce jeu a été développé dans le cadre du cours *Développement de jeux vidéo
 
 ---
 
-🌟 **Merci d’essayer Équilibre Forestier ! Sauvez la forêt et amusez-vous bien !** 🌟  
+
