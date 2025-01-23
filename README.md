@@ -34,7 +34,7 @@ Les visuels et sons du jeu proviennent de ces incroyables créateurs :
   - [Wood Crack](https://pixabay.com/sound-effects/wood-crack-1-105890/) par utsuru  
   - [Coin Clatter](https://pixabay.com/sound-effects/coin-clatter-6-87110/) par FenrirFangs  
 - **Arrière-plan** 🎨 :  
-  - [Pinterest](https://www.pinterest.com/pin/380272762264915496/)  
+  - [Pinterest](https://www.pinterest.com/pin/380272762264915496/) par Gabriela Araújo
 - **Arbres** 🖌️ :  
   - [Pixel Art Forest Pack](https://dubpixel.itch.io/pixel-art-forest-pack) par dubpixel  
 - **Musique** 🎵 :  
