@@ -34,10 +34,10 @@ kaboom({
 
 // === CONSTANTS ===
 const GAME_DURATION = 300; // 5 minutes in seconds
-const INITIAL_TREES = 100;
+const INITIAL_TREES = 90;
 const INITIAL_MONEY = 0;
 const INITIAL_TREE_PRICE = 50;
-const TREE_PRICE_MULTIPLIER = 1.05;
+const TREE_PRICE_MULTIPLIER = 1.04;
 const REGEN_RATE = 0.01;
 const INITIAL_TOOL_PRICE = 100;
 const TOOL_PRICE_INCREASE = 1.15;
@@ -72,6 +72,11 @@ loadSprite("play", "assets/image/play.png");
 
 loadSound("cut", "assets/sons/wood_crack.mp3");
 loadSound("buy", "assets/sons/buy.mp3");
+loadSound("music", "assets/sons/music.mp3");
+
+play("music", {
+    loop: true
+});
 
 let treeSprites = [];
 
@@ -89,7 +94,7 @@ function updateTreePrice() {
 function addNewTrees(count) {
     const screenWidth = width;
     const screenHeight = height;
-    const marginX = screenWidth * 0.1; // 10% margin on sides
+    const marginX = screenWidth * 0.13; // 10% margin on sides
     const marginTop = screenHeight * 0.17; // 10% margin on top
     const marginBottom = screenHeight * 0.2; // 20% margin on bottom
     const areaWidth = screenWidth - 2 * marginX;
@@ -630,6 +635,7 @@ Objectifs :
    - Le nombre d'arbres atteint 0 avant la fin du temps.
 
 Attention :
+- Le boycott vous fait perdre du temps ou de l'argent.
 - Couper des arbres augmente le risque de boycott.
 - Replanter des arbres réduit ce risque.
 

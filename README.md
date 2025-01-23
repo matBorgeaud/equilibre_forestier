@@ -1,29 +1,55 @@
-# 🌳 **Rase ta forêt**  
+# 🌳 Équilibre Forestier 🌳  
+Bienvenue dans **Équilibre Forestier**, un jeu où la gestion et la stratégie se mêlent pour préserver la beauté de la nature tout en atteignant vos objectifs économiques ! 🎮💰 Prenez soin de votre forêt, évitez les boycotts et devenez le héros des écosystèmes ! 🌱
 
-![illustration](assets/illustration.png)  
+---
 
-## 📖 **Description**  
-*Rase ta forêt* est un jeu humoristique et satirique qui pousse à réfléchir sur les **limites de la régénération naturelle**. À travers un gameplay simple mais percutant de type clicker, ce jeu met en lumière les conséquences d'une déforestation incontrôlée. 🌲🚜  
+## 🖼️ Aperçu  
+![Illustration du jeu](assets/illustration.png)
 
-L'idée est de vous amuser tout en explorant des concepts sérieux : jusqu'où peut-on aller avant qu'une forêt ne puisse plus se régénérer ? Et surtout, quand faut-il s'arrêter ? 🌱
+---
 
-Avec son ton décalé et son approche minimaliste, *Rase ta forêt* propose une expérience unique, à la fois éducative et divertissante. Vous pourriez bien découvrir que le véritable défi n’est pas de gagner… mais de savoir quand s’arrêter. 🤯  
+## 🚀 Jouez maintenant  
+Le jeu est jouable directement sur votre navigateur préféré :  
+👉 [**Équilibre Forestier**](https://jv2d.borgeaud.online) 👈  
+Pas d’installation requise, lancez-vous et amusez-vous ! 🎉  
 
-## 🎮 **Comment jouer ?**  
-🕹️ La façon la plus simple de jouer :  
-👉 Rendez-vous sur **[jv2d.borgeaud.online](https://jv2d.borgeaud.online/)** et commencez à explorer (ou à détruire) votre forêt !  
+---
 
-✅ **Objectif** :  
-Abattez des arbres pour maximiser vos gains, mais attention : la régénération naturelle a ses limites !  
+## ⚙️ Fonctionnalités  
+- **Coupez et replantez des arbres 🌲** pour gérer votre forêt.  
+- **Survivez aux boycotts ⚡**, qui pourraient ruiner vos plans.  
+- **Atteignez vos objectifs 🎯** : 30 arbres et 20,000 dollars en 5 minutes.  
 
-## 🛠️ **Outils utilisés**  
-- ⚡ **Kaboom.js** : un moteur JavaScript pour créer des jeux 2D.  
-- 🤖 **ChatGPT** : utilisé pour résoudre des questions de syntaxe et implémenter certaines fonctions, les prompts utilisés sont précisés au sein du code.  
+---
 
-## 🎓 **À propos du projet**  
-Ce jeu a été réalisé dans le cadre du cours **Jeu Vidéo 2D** dispensé par **Isaac Pante** au sein de la **Faculté des Lettres** de l’UNIL (Université de Lausanne).  
+## 🛠️ Technologies et outils  
+- **Kaboom.js** : Framework puissant et simple pour les jeux 2D.  
+- **GitHub Copilot** 🤖 : Assistant de codage pour un développement rapide et optimisé.  
 
-https://pixabay.com/sound-effects/wood-crack-1-105890/
-https://pixabay.com/sound-effects/coin-clatter-6-87110/
-https://www.pinterest.com/pin/380272762264915496/
+---
 
+## 🎵 Ressources utilisées  
+Les visuels et sons du jeu proviennent de ces incroyables créateurs :  
+- **Effets sonores** 🎶 :  
+  - [Wood Crack](https://pixabay.com/sound-effects/wood-crack-1-105890/) par utsuru  
+  - [Coin Clatter](https://pixabay.com/sound-effects/coin-clatter-6-87110/) par FenrirFangs  
+- **Arrière-plan** 🎨 :  
+  - [Pinterest](https://www.pinterest.com/pin/380272762264915496/)  
+- **Forêt en pixel art** 🖌️ :  
+  - [Pixel Art Forest Pack](https://dubpixel.itch.io/pixel-art-forest-pack) par dubpixel  
+- **Musique** 🎵 :  
+  - [The Beat of Nature](https://pixabay.com/music/solo-guitar-the-beat-of-nature-122841/) par folk_acoustic  
+
+---
+
+## 📝 Informations légales  
+Les assets sont utilisés conformément aux licences disponibles sur leurs plateformes respectives. Un grand merci à tous ces talentueux artistes ! 🙌  
+
+---
+
+## 📚 Contexte  
+Ce jeu a été développé dans le cadre du cours *Développement de jeux vidéo 2D*, dispensé par Isaac Pante (SLI, Lettres, UNIL).  
+
+---
+
+🌟 **Merci d’essayer Équilibre Forestier ! Sauvez la forêt et amusez-vous bien !** 🌟  
